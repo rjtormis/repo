@@ -1,6 +1,6 @@
 import Link from "next/link"
-import { IconArrowLeft } from "@tabler/icons-react"
-import { DEMO_NOTE, exerciseById } from "@/lib/demo-data"
+import { IconChevronLeft } from "@tabler/icons-react"
+import { exerciseById } from "@/lib/demo-data"
 import type { Session } from "@/lib/types"
 
 function formatLoad(weightKg: number | null, reps: number) {
@@ -26,20 +26,19 @@ export function SessionDetail({ session }: { session: Session }) {
   )
 
   return (
-    <div className="flex flex-1 flex-col gap-6">
-      <header className="flex items-start gap-3">
+    <div className="flex min-w-0 flex-1 flex-col gap-6 overflow-x-hidden">
+      <header className="flex items-start gap-1">
         <Link
           href="/"
-          aria-label="Back home"
-          className="mt-0.5 inline-flex size-9 items-center justify-center rounded-md hover:bg-muted"
+          aria-label="Back"
+          className="mt-0.5 inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
         >
-          <IconArrowLeft className="size-5 rtl:rotate-180" />
+          <IconChevronLeft className="size-4 rtl:rotate-180" stroke={1.5} />
         </Link>
-        <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted-foreground">{DEMO_NOTE} · Read-only</p>
+        <div className="min-w-0 flex-1 pt-2">
           <h1 className="text-xl font-medium">{session.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{formatWhen(when)}</p>
-          <p className="mt-0.5 text-sm text-muted-foreground tabular-nums">
+          <p className="mt-0.5 font-mono text-sm text-muted-foreground tabular-nums">
             {setCount} sets logged
           </p>
         </div>
@@ -64,7 +63,7 @@ export function SessionDetail({ session }: { session: Session }) {
                       <span className="text-muted-foreground tabular-nums">
                         Set {i + 1}
                       </span>
-                      <span className="font-medium tabular-nums">
+                      <span className="font-mono font-medium tabular-nums">
                         {formatLoad(s.weightKg, s.reps)}
                       </span>
                     </li>

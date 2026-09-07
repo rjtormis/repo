@@ -21,7 +21,25 @@ export type Session = {
   entries: ExerciseEntry[]
 }
 
+export type MuscleGroup =
+  | "Chest"
+  | "Back"
+  | "Legs"
+  | "Shoulders"
+  | "Arms"
+  | "Core"
+
 export type Exercise = {
   id: string
   name: string
+  muscleGroup: MuscleGroup
 }
+
+export const MUSCLE_GROUP_ORDER: MuscleGroup[] = [
+  "Chest",
+  "Back",
+  "Legs",
+  "Shoulders",
+  "Arms",
+  "Core",
+]

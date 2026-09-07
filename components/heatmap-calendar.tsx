@@ -102,10 +102,15 @@ export type HeatmapCalendarProps = {
   /** Show a built-in year dropdown next to the title, or configure its year list. */
   yearSelector?: boolean | YearSelectorConfig;
 
-  /** Cell size in px (default 12) */
+  /** Cell size in px (default 12). Ignored when `fillWidth` is true. */
   cellSize?: number;
   /** Gap between cells in px (default 3) */
   cellGap?: number;
+  /**
+   * Stretch week columns across the container width (equal flex).
+   * Use on mobile so the grid stays flush with page padding — no blank strip.
+   */
+  fillWidth?: boolean;
 
   /** Called when a cell is clicked */
   onCellClick?: (cell: HeatmapCell) => void;
@@ -171,9 +176,10 @@ function addDays(d: Date, days: number) {
 }
 
 function toKey(d: Date) {
-  // Using UTC ISO date key keeps things stable for demos.
-  // If you want strict local timezone day mapping, swap this to local YYYY-MM-DD generation.
-  return d.toISOString().slice(0, 10);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 function startOfWeek(d: Date, weekStartsOn: 0 | 1) {
@@ -225,12 +231,43 @@ function sameMonth(a: Date, b: Date) {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
 }
 
+const MONTH_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
+
+const MONTH_LONG = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
 function formatMonth(d: Date, fmt: "short" | "long" | "numeric") {
   if (fmt === "numeric") {
     const yy = String(d.getFullYear()).slice(-2);
     return `${d.getMonth() + 1}/${yy}`;
   }
-  return d.toLocaleDateString(undefined, { month: fmt });
+  // Fixed English labels — avoid SSR/client locale skew (Sep vs Sept)
+  return fmt === "long" ? MONTH_LONG[d.getMonth()] : MONTH_SHORT[d.getMonth()];
 }
 
 function defaultYearOptions(currentYear: number, count = 5) {
@@ -243,7 +280,7 @@ function weekdayLabelForIndex(index: number, weekStartsOn: 0 | 1) {
   const actualDay = (weekStartsOn + index) % 7;
   // stable reference week (UTC)
   const base = new Date(Date.UTC(2024, 0, 7 + actualDay));
-  return base.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase();
+  return base.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase();
 }
 
 /* ---------------- component ---------------- */
@@ -260,6 +297,7 @@ export function HeatmapCalendar({
   yearSelector,
   cellSize = 12,
   cellGap = 3,
+  fillWidth = false,
   onCellClick,
   levelClassNames,
   palette,
@@ -329,8 +367,13 @@ export function HeatmapCalendar({
   const valueMap = React.useMemo(() => {
     const map = new Map<string, { value: number; meta?: unknown }>();
     for (const item of data) {
-      const d = typeof item.date === "string" ? new Date(item.date) : item.date;
-      const key = toKey(d);
+      let key: string;
+      if (typeof item.date === "string") {
+        // Already YYYY-MM-DD — don't reparse via Date (UTC skew)
+        key = item.date.slice(0, 10);
+      } else {
+        key = toKey(item.date);
+      }
 
       const prev = map.get(key);
       const nextVal = (prev?.value ?? 0) + (item.value ?? 0); // sum merge
@@ -376,7 +419,7 @@ export function HeatmapCalendar({
         disabled: !inRange,
         future: inRange && isFuture,
         meta,
-        label: date.toLocaleDateString(undefined, {
+        label: date.toLocaleDateString("en-US", {
           year: "numeric",
           month: "short",
           day: "numeric",
@@ -482,12 +525,64 @@ export function HeatmapCalendar({
     );
   };
 
-  const weekdayLabelWidth = showAxis && showWeekdays ? 44 : 0;
+  const weekdayLabelWidth = showAxis && showWeekdays ? 36 : 0;
 
   const showTitle = Boolean(title) || Boolean(yearSelectorCfg);
 
+  const bare = !showTitle;
+  const Root = bare ? "div" : Card;
+  const Body = bare ? "div" : CardContent;
+
+  const cellButton = (cell: HeatmapCell, colIndex: number) => {
+    const cls = levels[clampLevel(cell.level, levels.length)];
+    const inert = cell.disabled || cell.future;
+    return (
+      <Tooltip key={`${cell.key}-${colIndex}`}>
+        <TooltipTrigger
+          render={
+            <button
+              type="button"
+              disabled={inert}
+              onClick={() => !inert && onCellClick?.(cell)}
+              className={cn(
+                "rounded-xs outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                fillWidth ? "aspect-square w-full shrink-0" : undefined,
+                !palette?.length && cls,
+                inert && "cursor-default opacity-40 pointer-events-none",
+              )}
+              style={
+                fillWidth
+                  ? { ...(bgStyleForLevel(cell.level, palette) ?? {}) }
+                  : {
+                      width: cellSize,
+                      height: cellSize,
+                      ...(bgStyleForLevel(cell.level, palette) ?? {}),
+                    }
+              }
+              aria-label={
+                cell.disabled
+                  ? "Outside range"
+                  : cell.future
+                    ? `${cell.label}: Upcoming`
+                    : `${cell.label}: ${cell.value}`
+              }
+              role="gridcell"
+            />
+          }
+        />
+        <TooltipContent side="top">{tooltipNode(cell)}</TooltipContent>
+      </Tooltip>
+    );
+  };
+
   return (
-    <Card className={cn("overflow-visible", className)}>
+    <Root
+      className={cn(
+        "overflow-visible",
+        fillWidth && "w-full",
+        className
+      )}
+    >
       {showTitle ? (
         <CardHeader className="pb-3">
           {title ? <CardTitle className="text-base">{title}</CardTitle> : <span />}
@@ -512,56 +607,86 @@ export function HeatmapCalendar({
         </CardHeader>
       ) : null}
 
-      <CardContent className={!showTitle ? "px-0" : undefined}>
+      <Body className={cn(bare && "p-0")}>
         <TooltipProvider delay={80}>
-          <div
-            className={cn(
-              "flex gap-4 overflow-x-auto overscroll-x-contain",
-              "[-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-              placement === "bottom" && "flex-col"
-            )}
-          >
-            {/* Labeled calendar area */}
-            <div className={cn("shrink-0", axisCfg.className)}>
-              {/* Month labels row */}
+          <div className="flex flex-col">
+            <div
+              className={cn(
+                fillWidth ? "w-full" : "max-w-full overflow-hidden",
+                axisCfg.className
+              )}
+            >
               {showAxis && showMonths ? (
-                <div className="flex items-end" style={{ paddingLeft: weekdayLabelWidth }}>
-                  <div
-                    className="relative"
-                    style={{
-                      height: 18,
-                      width: columns.length * (cellSize + cellGap) - cellGap,
-                    }}
-                  >
-                    {monthLabels.map((m) => (
+                fillWidth ? (
+                  <div className="mb-1 flex w-full">
+                    {showWeekdays ? (
                       <div
-                        key={m.colIndex}
-                        className="absolute text-xs text-muted-foreground"
-                        style={{
-                          left: m.colIndex * (cellSize + cellGap),
-                          top: 0,
-                        }}
-                      >
-                        {m.text}
-                      </div>
-                    ))}
+                        className="me-1.5 shrink-0"
+                        style={{ width: 30 }}
+                        aria-hidden
+                      />
+                    ) : null}
+                    <div
+                      className="flex min-w-0 flex-1"
+                      style={{ gap: `${cellGap}px` }}
+                    >
+                      {columns.map((_, i) => {
+                        const label = monthLabels.find((m) => m.colIndex === i);
+                        return (
+                          <div
+                            key={i}
+                            className="min-w-0 flex-1 overflow-hidden text-xs leading-none text-muted-foreground"
+                          >
+                            {label?.text ?? "\u00a0"}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div
+                    className="flex items-end"
+                    style={{ paddingLeft: weekdayLabelWidth }}
+                  >
+                    <div
+                      className="relative mb-1"
+                      style={{
+                        height: 16,
+                        width: columns.length * (cellSize + cellGap) - cellGap,
+                      }}
+                    >
+                      {monthLabels.map((m) => (
+                        <div
+                          key={m.colIndex}
+                          className="absolute whitespace-nowrap text-xs text-muted-foreground"
+                          style={{
+                            left: m.colIndex * (cellSize + cellGap),
+                            top: 0,
+                          }}
+                        >
+                          {m.text}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
               ) : null}
 
-              <div className="flex">
-                {/* Weekday labels column */}
+              <div className={cn("flex", fillWidth ? "w-full" : "max-w-full")}>
                 {showAxis && showWeekdays ? (
                   <div
-                    className="me-2 flex flex-col"
+                    className="me-1.5 flex w-[30px] shrink-0 flex-col"
                     style={{ gap: `${cellGap}px` }}
                     aria-hidden="true"
                   >
                     {Array.from({ length: 7 }).map((_, rowIdx) => (
                       <div
                         key={rowIdx}
-                        className="flex items-center justify-end text-xs text-muted-foreground"
-                        style={{ width: 40, height: cellSize }}
+                        className={cn(
+                          "flex items-center justify-end overflow-hidden text-[10px] leading-none text-muted-foreground",
+                          fillWidth ? "min-h-0 flex-1" : undefined
+                        )}
+                        style={fillWidth ? undefined : { height: cellSize }}
                       >
                         {weekdayIndices.includes(rowIdx)
                           ? weekdayLabelForIndex(rowIdx, weekStartsOn)
@@ -571,9 +696,11 @@ export function HeatmapCalendar({
                   </div>
                 ) : null}
 
-                {/* Heatmap grid — explicit column-major tracks so wrappers can't collapse rows */}
                 <div
-                  className="flex shrink-0"
+                  className={cn(
+                    "flex",
+                    fillWidth ? "min-w-0 flex-1" : "shrink-0"
+                  )}
                   style={{ gap: `${cellGap}px` }}
                   role="grid"
                   aria-label="Heatmap calendar"
@@ -581,61 +708,42 @@ export function HeatmapCalendar({
                   {columns.map((col, i) => (
                     <div
                       key={i}
-                      className="grid shrink-0"
-                      style={{
-                        gap: `${cellGap}px`,
-                        gridTemplateRows: `repeat(7, ${cellSize}px)`,
-                        width: cellSize,
-                      }}
+                      className={cn(
+                        fillWidth
+                          ? "flex min-w-0 flex-1 flex-col"
+                          : "grid shrink-0"
+                      )}
+                      style={
+                        fillWidth
+                          ? { gap: `${cellGap}px` }
+                          : {
+                              gap: `${cellGap}px`,
+                              gridTemplateRows: `repeat(7, ${cellSize}px)`,
+                              width: cellSize,
+                            }
+                      }
                       role="rowgroup"
                     >
-                      {col.map((cell) => {
-                        const cls = levels[clampLevel(cell.level, levels.length)];
-                        const inert = cell.disabled || cell.future;
-                        return (
-                          <Tooltip key={`${cell.key}-${i}`}>
-                            <TooltipTrigger
-                              render={
-                                <button
-                                  type="button"
-                                  disabled={inert}
-                                  onClick={() => !inert && onCellClick?.(cell)}
-                                  className={cn(
-                                    "rounded-[2px] outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                                    !palette?.length && cls,
-                                    inert && "cursor-default opacity-40 pointer-events-none",
-                                  )}
-                                  style={{
-                                    width: cellSize,
-                                    height: cellSize,
-                                    ...(bgStyleForLevel(cell.level, palette) ?? {}),
-                                  }}
-                                  aria-label={
-                                    cell.disabled
-                                      ? "Outside range"
-                                      : cell.future
-                                        ? `${cell.label}: Upcoming`
-                                        : `${cell.label}: ${cell.value}`
-                                  }
-                                  role="gridcell"
-                                />
-                              }
-                            />
-                            <TooltipContent side="top">{tooltipNode(cell)}</TooltipContent>
-                          </Tooltip>
-                        );
-                      })}
+                      {col.map((cell) => cellButton(cell, i))}
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Legend */}
-            {LegendUI}
+            {showLegend || renderLegend ? (
+              <div
+                className={cn(
+                  "mt-3",
+                  placement === "bottom" ? "w-full" : "shrink-0"
+                )}
+              >
+                {LegendUI}
+              </div>
+            ) : null}
           </div>
         </TooltipProvider>
-      </CardContent>
-    </Card>
+      </Body>
+    </Root>
   );
 }
