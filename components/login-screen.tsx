@@ -9,6 +9,8 @@ import {
   IconMail,
 } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
+import { Logo } from "@/components/logo"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { cn } from "@/lib/utils"
 
 type Phase = "idle" | "submitting" | "sent"
@@ -83,8 +85,14 @@ export function LoginScreen() {
         "overflow-y-auto overscroll-y-contain"
       )}
     >
+      <div className="flex items-center justify-end pt-1">
+        <ThemeToggle />
+      </div>
+
       <div className="flex flex-1 flex-col justify-center py-8">
-        <p className="mb-8 text-center text-sm text-muted-foreground">Repo</p>
+        <div className="mb-8 flex justify-center">
+          <Logo markClassName="size-8" />
+        </div>
 
         {phase === "sent" ? (
           <div className="flex flex-col items-center text-center">

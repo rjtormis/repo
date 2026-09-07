@@ -1,17 +1,21 @@
 import type { Exercise, Session } from "@/lib/types"
 
-/** Synthetic demo content — not real user history. */
-export const DEMO_NOTE = "Synthetic demo data"
-
 export const exercises: Exercise[] = [
-  { id: "ex-squat", name: "Back Squat" },
-  { id: "ex-bench", name: "Bench Press" },
-  { id: "ex-row", name: "Barbell Row" },
-  { id: "ex-ohp", name: "Overhead Press" },
-  { id: "ex-rdl", name: "Romanian Deadlift" },
-  { id: "ex-pullup", name: "Pull-Up" },
-  { id: "ex-curl", name: "Barbell Curl" },
-  { id: "ex-lat", name: "Lat Pulldown" },
+  { id: "ex-bench", name: "Bench Press", muscleGroup: "Chest" },
+  { id: "ex-incline", name: "Incline Dumbbell Press", muscleGroup: "Chest" },
+  { id: "ex-fly", name: "Cable Fly", muscleGroup: "Chest" },
+  { id: "ex-row", name: "Barbell Row", muscleGroup: "Back" },
+  { id: "ex-pullup", name: "Pull-Up", muscleGroup: "Back" },
+  { id: "ex-lat", name: "Lat Pulldown", muscleGroup: "Back" },
+  { id: "ex-squat", name: "Back Squat", muscleGroup: "Legs" },
+  { id: "ex-rdl", name: "Romanian Deadlift", muscleGroup: "Legs" },
+  { id: "ex-legpress", name: "Leg Press", muscleGroup: "Legs" },
+  { id: "ex-ohp", name: "Overhead Press", muscleGroup: "Shoulders" },
+  { id: "ex-lateral", name: "Lateral Raise", muscleGroup: "Shoulders" },
+  { id: "ex-curl", name: "Barbell Curl", muscleGroup: "Arms" },
+  { id: "ex-pushdown", name: "Tricep Pushdown", muscleGroup: "Arms" },
+  { id: "ex-plank", name: "Plank", muscleGroup: "Core" },
+  { id: "ex-wheel", name: "Ab Wheel", muscleGroup: "Core" },
 ]
 
 function daysAgo(n: number, hour = 18): string {

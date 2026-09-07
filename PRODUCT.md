@@ -75,7 +75,10 @@ PWA-specific position: no install required, no signup to start, works offline, d
 
 ## Brand Commitments
 
-App name undecided. “Repo” is the user’s suggested candidate only — not locked.
+- Working name: **Repo** (still a candidate, not legally locked).
+- Logomark: a compact **contribution heatmap** (5×7 squares, denser toward recent). This is the product’s share hook and differentiator — not gym hardware, not isometric “data cubes.”
+- Wordmark: geometric monospace, bold (Geist Mono in product UI).
+- Dark lockup ground: `#0A192F`. Heat fills: teal/cyan ramp ending `#E0FFFF`; empty cells stay hollow/muted — never red or punitive.
 
 ## Evidence on Hand
 

@@ -18,8 +18,8 @@ export const metadata: Metadata = {
   description: "Last session under each set. Offline-first. No programs.",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "default",
-    title: "Workout log",
+    statusBarStyle: "black-translucent",
+    title: "Repo",
   },
   formatDetection: {
     telephone: false,
@@ -30,9 +30,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  colorScheme: "dark light",
   themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#212121" },
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#252525" },
   ],
 }
 
@@ -46,7 +47,7 @@ export default function RootLayout({
       lang="en"
       suppressHydrationWarning
       className={cn(
-        "antialiased",
+        "bg-background antialiased",
         fontMono.variable,
         "font-sans",
         inter.variable
