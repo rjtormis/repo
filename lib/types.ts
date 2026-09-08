@@ -19,15 +19,12 @@ export type Session = {
   startedAt: string
   finishedAt: string | null
   entries: ExerciseEntry[]
+  /** Explicit metadata only — never infer PRs from the session name. */
+  prExerciseIds?: string[]
 }
 
 export type MuscleGroup =
-  | "Chest"
-  | "Back"
-  | "Legs"
-  | "Shoulders"
-  | "Arms"
-  | "Core"
+  "Chest" | "Back" | "Legs" | "Shoulders" | "Arms" | "Core"
 
 export type Exercise = {
   id: string

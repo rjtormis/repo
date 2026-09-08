@@ -1,0 +1,225 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id              String           @id
+  name            String
+  email           String
+  emailVerified   Boolean          @default(false)
+  image           String?
+  workoutDays     Int // How many days a week the user wants to workout
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  sessions        Session[]
+  accounts        Account[]
+  exercises       Exercise[]
+  workoutSessions WorkoutSession[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+enum Difficulty {
+  BEGINNER
+  ADVANCED
+  EXPERT
+  INTERMEDIATE
+  NOVICE
+  MASTER
+  GRAND_MASTER
+  LEGENDARY
+}
+
+enum MuscleGroup {
+  ABDOMINALS
+  ABDUCTORS
+  ADDUCTORS
+  BACK
+  BICEPS
+  CALVES
+  CHEST
+  FOREARMS
+  GLUTES
+  HAMSTRINGS
+  HIP_FLEXORS
+  QUADRICEPS
+  SHINS
+  SHOULDERS
+  TRAPEZIUS
+  TRICEPS
+}
+
+enum PrimeMoverMuscle {
+  ADDUCTOR_MAGNUS
+  ANTERIOR_DELTOID
+  BICEPS_BRACHII
+  BICEPS_FEMORIS
+  BRACHIORADIALIS
+  ERECTOR_SPINAE
+  GASTROCNEMIUS
+  GLUTEUS_MAXIMUS
+  GLUTEUS_MEDIUS
+  ILIOPSOAS
+  INFRASPINATUS
+  LATERAL_DELTOID
+  LATISSIMUS_DORSI
+  OBLIQUES
+  PECTORALIS_MAJOR
+  POSTERIOR_DELTOID
+  QUADRICEPS_FEMORIS
+  RECTUS_ABDOMINIS
+  SOLEUS
+  SUBSCAPULARIS
+  TIBIALIS_ANTERIOR
+  TRICEPS_BRACHII
+  UPPER_TRAPEZIUS
+  VASTUS_MEDIAS
+}
+
+enum BodyRegion {
+  CORE
+  FULL_BODY
+  UPPER_BODY
+  LOWER_BODY
+}
+
+enum Mechanics {
+  COMPOUND
+  ISOLATION
+  PULL
+}
+
+model Exercise {
+  id   String @id @default(uuid())
+  name String
+  slug String @unique
+
+  shortDemo        String?
+  inDepthDemo      String?
+  difficulty       Difficulty       @default(BEGINNER)
+  muscleGroups     MuscleGroup
+  primeMoverMuscle PrimeMoverMuscle
+  equipments       String[]
+  bodyRegion       BodyRegion       @default(FULL_BODY)
+  mechanics        Mechanics        @default(COMPOUND)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String?
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  workoutExercises WorkoutExercise[]
+
+  @@map("exercise")
+}
+
+model WorkoutSession {
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique
+  description String?
+
+  startedAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  exercises WorkoutExercise[]
+
+  @@index([userId, startedAt])
+  @@map("workout_session")
+}
+
+model WorkoutExercise {
+  id       String @id @default(uuid())
+  position Int
+
+  workoutSessionId String
+  workoutSession   WorkoutSession @relation(fields: [workoutSessionId], references: [id], onDelete: Cascade)
+
+  exerciseId String
+  exercise   Exercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  workoutSets WorkoutSet[]
+
+  @@unique([workoutSessionId, position])
+  @@index([exerciseId])
+  @@map("workout_exercise")
+}
+
+model WorkoutSet {
+  id       String   @id @default(uuid())
+  position Int
+  weight   Decimal? @db.Decimal(6, 2)
+
+  reps        Int
+  completedAt DateTime?
+
+  workoutExerciseId String
+  workoutExercise   WorkoutExercise @relation(fields: [workoutExerciseId], references: [id], onDelete: Cascade)
+
+  @@unique([workoutExerciseId, position])
+  @@map("workout_set")
+}

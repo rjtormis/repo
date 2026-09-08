@@ -27,9 +27,9 @@ export function ThemeToggle({ className }: { className?: string }) {
       )}
     >
       {mounted && isDark ? (
-        <IconSun className="size-4" stroke={1.5} />
+        <IconSun className="size-5.5" stroke={1.5} />
       ) : (
-        <IconMoon className="size-4" stroke={1.5} />
+        <IconMoon className="size-5.5" stroke={1.5} />
       )}
     </button>
   )

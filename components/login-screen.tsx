@@ -110,8 +110,8 @@ export function LoginScreen() {
             </h1>
             <p className="mt-3 max-w-[28ch] text-sm text-muted-foreground">
               We sent a sign-in link to{" "}
-              <span className="font-mono text-foreground">{sentTo}</span>.
-              Your logs on this device are unchanged.
+              <span className="font-mono text-foreground">{sentTo}</span>. Your
+              logs on this device are unchanged.
             </p>
             <button
               type="button"
@@ -127,7 +127,7 @@ export function LoginScreen() {
               <h1 className="text-2xl font-medium tracking-tight">
                 Sync your training
               </h1>
-              <p className="mt-3 text-sm text-muted-foreground text-balance">
+              <p className="mt-3 text-sm text-balance text-muted-foreground">
                 Your logs stay on this device either way. Sign in to back them
                 up and use another phone.
               </p>
@@ -188,7 +188,7 @@ export function LoginScreen() {
                 {phase === "submitting" ? (
                   <>
                     <IconLoader2
-                      className="size-4 animate-spin"
+                      className="size-4.5 animate-spin"
                       data-icon="inline-start"
                       aria-hidden
                     />
@@ -212,11 +212,11 @@ export function LoginScreen() {
                 variant="outline"
                 size="lg"
                 disabled={phase === "submitting"}
-                className="h-12 min-h-11 w-full shadow-none text-base"
+                className="h-12 min-h-11 w-full text-base shadow-none"
                 onClick={() => fakeOAuth()}
               >
                 <IconBrandGoogle
-                  className="size-4"
+                  className="size-5"
                   data-icon="inline-start"
                   aria-hidden
                 />
@@ -227,11 +227,11 @@ export function LoginScreen() {
                 variant="outline"
                 size="lg"
                 disabled={phase === "submitting"}
-                className="h-12 min-h-11 w-full shadow-none text-base"
+                className="h-12 min-h-11 w-full text-base shadow-none"
                 onClick={() => fakeOAuth()}
               >
                 <IconBrandApple
-                  className="size-4"
+                  className="size-5"
                   data-icon="inline-start"
                   aria-hidden
                 />
