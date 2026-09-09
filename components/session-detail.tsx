@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { exerciseById, pastSessions } from "@/lib/demo-data"
 import type { ExerciseEntry, Session, SetLog } from "@/lib/types"
+import { formatWeight, type WeightUnit } from "@/lib/units"
+import { useUserPrefs } from "@/lib/user-prefs"
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 const MONTHS = [
@@ -50,7 +52,7 @@ function completedSets(entry: ExerciseEntry): SetLog[] {
   return entry.sets.filter((setLog) => setLog.completedAt)
 }
 
-function setSummary(entry: ExerciseEntry): string {
+function setSummary(entry: ExerciseEntry, unit: WeightUnit): string {
   const groups: { weightKg: number | null; reps: number[] }[] = []
 
   for (const setLog of completedSets(entry)) {
@@ -64,7 +66,7 @@ function setSummary(entry: ExerciseEntry): string {
 
   return groups
     .map(({ weightKg, reps }) => {
-      const weight = weightKg == null ? "BW" : `${weightKg} kg`
+      const weight = weightKg == null ? "BW" : formatWeight(weightKg, unit)
       return `${weight} × ${reps.join(", ")}`
     })
     .join(" · ")
@@ -79,12 +81,6 @@ function entryVolume(entry: ExerciseEntry): number {
 
 function sessionVolume(session: Session): number {
   return session.entries.reduce((sum, entry) => sum + entryVolume(entry), 0)
-}
-
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(
-    value
-  )
 }
 
 function formatHeaderDate(session: Session): string {
@@ -163,7 +159,7 @@ function exerciseComparison(
   }
 }
 
-function changeBadge(comparison: ExerciseComparison) {
+function changeBadge(comparison: ExerciseComparison, unit: WeightUnit) {
   if (Math.abs(comparison.delta) < 0.001) {
     return {
       label: "no change",
@@ -172,7 +168,7 @@ function changeBadge(comparison: ExerciseComparison) {
   }
   const sign = comparison.delta > 0 ? "+" : "−"
   return {
-    label: `${sign}${formatNumber(Math.abs(comparison.delta))} kg`,
+    label: `${sign}${formatWeight(Math.abs(comparison.delta), unit)}`,
     className:
       comparison.delta > 0
         ? "bg-bg-success text-text-success"
@@ -217,6 +213,7 @@ export function SessionDetail({
   nextSessionId: string | null
 }) {
   const router = useRouter()
+  const { weightUnit } = useUserPrefs()
   const [name, setName] = useState(session.name)
   const [renameDraft, setRenameDraft] = useState(session.name)
   const [renameOpen, setRenameOpen] = useState(false)
@@ -347,7 +344,7 @@ export function SessionDetail({
           <div className="rounded-(--radius) bg-surface-1 p-3">
             <p className="text-[11px] text-muted-foreground">volume</p>
             <p className="mt-1 truncate font-mono text-[17px] tabular-nums">
-              {formatNumber(totalVolume)} kg
+              {formatWeight(totalVolume, weightUnit)}
             </p>
           </div>
         </div>
@@ -361,7 +358,7 @@ export function SessionDetail({
             const sets = completedSets(entry)
             const volume = entryVolume(entry)
             const comparison = exerciseComparison(session, entry)
-            const badge = comparison ? changeBadge(comparison) : null
+            const badge = comparison ? changeBadge(comparison, weightUnit) : null
             const isPr = session.prExerciseIds?.includes(entry.exerciseId)
             const mixedWeights =
               new Set(sets.map((setLog) => String(setLog.weightKg))).size > 1
@@ -405,7 +402,7 @@ export function SessionDetail({
                             aria-label={`Set ${setIndex + 1}: ${setLog.reps} reps${
                               setLog.weightKg == null
                                 ? " at bodyweight"
-                                : ` at ${formatNumber(setLog.weightKg)} kilograms`
+                                : ` at ${formatWeight(setLog.weightKg, weightUnit)}`
                             }`}
                             className={`${SET_CHIP} inline-flex flex-col items-center justify-center rounded-md border border-success bg-success font-mono text-sm text-emerald-950 tabular-nums`}
                           >
@@ -413,7 +410,9 @@ export function SessionDetail({
                               <span className="text-[10px] leading-none opacity-80">
                                 {setLog.weightKg == null
                                   ? "BW"
-                                  : formatNumber(setLog.weightKg)}
+                                  : formatWeight(setLog.weightKg, weightUnit, {
+                                      unit: false,
+                                    })}
                               </span>
                             ) : null}
                             <span className="leading-none">{setLog.reps}</span>
@@ -433,7 +432,7 @@ export function SessionDetail({
                         {sets.length} {sets.length === 1 ? "set" : "sets"}
                       </p>
                       <p className="mt-0.5 truncate font-mono text-sm tabular-nums">
-                        {setSummary(entry)}
+                        {setSummary(entry, weightUnit)}
                       </p>
                     </div>
                     <div className="shrink-0 text-end">
@@ -441,14 +440,15 @@ export function SessionDetail({
                         volume
                       </p>
                       <p className="mt-0.5 font-mono text-sm tabular-nums">
-                        {formatNumber(volume)} kg
+                        {formatWeight(volume, weightUnit)}
                       </p>
                     </div>
                   </div>
 
                   {comparison ? (
                     <p className="font-mono text-[11px] text-muted-foreground tabular-nums">
-                      was {formatNumber(comparison.previousWeight)} kg on{" "}
+                      was {formatWeight(comparison.previousWeight, weightUnit)}{" "}
+                      on{" "}
                       {comparison.date}
                     </p>
                   ) : null}
@@ -479,7 +479,7 @@ export function SessionDetail({
                         : "bg-surface-1"
                     }`}
                     style={{ height: `${height}%` }}
-                    title={`${formatNumber(volume)} kg`}
+                    title={formatWeight(volume, weightUnit)}
                   />
                 )
               })}

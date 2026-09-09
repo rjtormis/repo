@@ -1,5 +1,12 @@
-import { HomeScreen } from "@/components/home-screen"
+import { redirect } from "next/navigation"
+import HomeScreen from "@/components/home-screen"
+import { getServerSession } from "@/lib/session"
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await getServerSession()
+  if (!session) {
+    redirect("/login")
+  }
+
   return <HomeScreen />
 }

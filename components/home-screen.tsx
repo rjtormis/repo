@@ -10,11 +10,7 @@ import {
 } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import {
-  IconChevronRight,
-  IconFlame,
-  IconPlus,
-} from "@tabler/icons-react"
+import { IconChevronRight, IconFlame, IconPlus } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import {
   HeatmapCalendar,
@@ -22,8 +18,8 @@ import {
   type HeatmapDatum,
 } from "@/components/heatmap-calendar"
 import { NavigationMenu } from "@/components/navigation-menu"
+import { useUserPrefs } from "@/lib/user-prefs"
 import { cn } from "@/lib/utils"
-
 type SessionCard = {
   id: string
   name: string
@@ -103,7 +99,8 @@ function exactWeekColumns(
  */
 function fitHeatmap(
   widthPx: number,
-  end: Date | null
+  end: Date | null,
+  weekStartsOn: 0 | 1 = WEEK_STARTS_ON
 ): { rangeDays: number; cellSize: number } {
   if (widthPx <= 0) {
     return { rangeDays: TARGET_DAYS, cellSize: 11 }
@@ -111,7 +108,7 @@ function fitHeatmap(
 
   let rangeDays = TARGET_DAYS
   const weeksFor = (days: number) =>
-    end ? exactWeekColumns(end, days) : Math.ceil(days / 7)
+    end ? exactWeekColumns(end, days, weekStartsOn) : Math.ceil(days / 7)
 
   while (rangeDays > MIN_DAYS) {
     const weeks = Math.max(1, weeksFor(rangeDays))
@@ -370,8 +367,9 @@ const pagePadStyle: CSSProperties = {
   paddingInlineEnd: `max(${PAGE_PAD_X}px, env(safe-area-inset-inline-end, 0px))`,
 }
 
-export function HomeScreen() {
+export default function HomeScreen() {
   const router = useRouter()
+  const { weekStartsOn, workoutDays } = useUserPrefs()
   const heatMeasureRef = useRef<HTMLDivElement>(null)
   const [now] = useState(() => Date.now())
   // Defer calendar math until mount so SSR HTML matches the client clock/locale
@@ -397,7 +395,7 @@ export function HomeScreen() {
     const el = heatMeasureRef.current
     if (!el) return
     const update = () => {
-      const next = fitHeatmap(el.clientWidth, endDate)
+      const next = fitHeatmap(el.clientWidth, endDate, weekStartsOn)
       setFit((prev) =>
         prev.rangeDays === next.rangeDays && prev.cellSize === next.cellSize
           ? prev
@@ -408,7 +406,7 @@ export function HomeScreen() {
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [endDate])
+  }, [endDate, weekStartsOn])
 
   const { heatData, sessionCount, weekStreak } = useMemo(() => {
     if (!endDate) {
@@ -436,7 +434,7 @@ export function HomeScreen() {
   const heatReady = endDate !== null
   const monthsShown = monthsFromDays(fit.rangeDays)
   const weekDone = emptyMode ? 0 : weekly.done
-  const weekGoal = weekly.goal
+  const weekGoal = workoutDays > 0 ? workoutDays : weekly.goal
   const level = progressFromSessions(displaySessions)
   const greeting = clock ? greetingForHour(clock.getHours()) : null
   const dateLabel = clock ? formatHomeDate(clock) : null
@@ -559,10 +557,11 @@ export function HomeScreen() {
             {heatReady ? (
               <div className="flex w-full max-w-full flex-col overflow-hidden">
                 <HeatmapCalendar
+                  key={weekStartsOn}
                   data={displayData}
                   rangeDays={fit.rangeDays}
                   endDate={endDate}
-                  weekStartsOn={WEEK_STARTS_ON}
+                  weekStartsOn={weekStartsOn}
                   cellSize={fit.cellSize}
                   cellGap={CELL_GAP}
                   fillWidth

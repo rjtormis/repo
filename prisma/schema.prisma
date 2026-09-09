@@ -18,13 +18,16 @@ model User {
   email           String
   emailVerified   Boolean          @default(false)
   image           String?
-  workoutDays     Int // How many days a week the user wants to workout
+  weightUnit      String           @default("kg")
+  weekStartsOn    Int              @default(0)
+  workoutDays     Int              @default(0) // How many days a week the user wants to workout
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   sessions        Session[]
   accounts        Account[]
   exercises       Exercise[]
   workoutSessions WorkoutSession[]
+  motivationMessages MotivationMessageDaily[]
 
   @@unique([email])
   @@map("user")
@@ -222,4 +225,33 @@ model WorkoutSet {
 
   @@unique([workoutExerciseId, position])
   @@map("workout_set")
+}
+
+model MotivationMessage {
+  id     String  @id @default(uuid())
+  lead   String
+  accent String
+  author String?
+  source String?
+
+  dailies MotivationMessageDaily[]
+
+  @@unique([lead, accent])
+  @@map("motivation_message")
+}
+
+model MotivationMessageDaily { 
+    id String @id @default(uuid())
+    date DateTime @db.Date
+
+
+    userId String
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    motivationMessageId String
+    motivationMessages MotivationMessage @relation(fields: [motivationMessageId],references: [id])
+
+  @@unique([userId, date])
+  @@index([motivationMessageId])
+  @@map("motivation_message_daily")
 }

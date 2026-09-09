@@ -40,6 +40,8 @@ import {
   sessionById,
 } from "@/lib/demo-data"
 import type { Exercise, ExerciseEntry, SetLog } from "@/lib/types"
+import { formatWeight, kgToDisplay, displayToKg, type WeightUnit } from "@/lib/units"
+import { useUserPrefs } from "@/lib/user-prefs"
 import { cn } from "@/lib/utils"
 
 const CHIP = "min-h-11 w-[52px] shrink-0"
@@ -122,29 +124,29 @@ function formatElapsed(ms: number): string {
   return `${m}:${String(s).padStart(2, "0")}`
 }
 
-function formatNumber(value: number): string {
-  return new Intl.NumberFormat("en-US", {
-    maximumFractionDigits: 1,
-  }).format(value)
-}
-
-function formatPrior(weightKg: number | null, reps: number): string {
+function formatPrior(
+  weightKg: number | null,
+  reps: number,
+  unit: WeightUnit
+): string {
   if (weightKg == null) return `BW × ${reps}`
-  return `${weightKg} × ${reps}`
+  return `${formatWeight(weightKg, unit, { unit: false })} × ${reps}`
 }
 
 function formatExerciseNumber(index: number): string {
   return String(index + 1).padStart(2, "0")
 }
 
-function lastTimeLabel(exerciseId: string): string | null {
+function lastTimeLabel(exerciseId: string, unit: WeightUnit): string | null {
   const previous = lastSetsForExercise(exerciseId)
   if (previous.length === 0) return null
   const weight = previous[0]?.weightKg
-  return weight == null ? "Last time: BW" : `Last time: ${weight} kg`
+  return weight == null
+    ? "Last time: BW"
+    : `Last time: ${formatWeight(weight, unit)}`
 }
 
-function completedSetSummary(sets: SetLog[]): string {
+function completedSetSummary(sets: SetLog[], unit: WeightUnit): string {
   const completed = sets.filter((setLog) => setLog.completedAt)
   if (completed.length === 0) return ""
 
@@ -160,7 +162,8 @@ function completedSetSummary(sets: SetLog[]): string {
 
   return groups
     .map(({ weightKg, reps }) => {
-      const weight = weightKg == null ? "BW" : weightKg
+      const weight =
+        weightKg == null ? "BW" : formatWeight(weightKg, unit, { unit: false })
       return `${weight} × ${reps.join(", ")}`
     })
     .join(" · ")
@@ -173,6 +176,7 @@ type RemovedSet = {
 }
 
 export function WorkoutLogger({ sessionId }: { sessionId: string }) {
+  const { weightUnit } = useUserPrefs()
   const router = useRouter()
   const [library] = useState<Exercise[]>(seedExercises)
   const [sessionName, setSessionName] = useState(() =>
@@ -449,7 +453,7 @@ export function WorkoutLogger({ sessionId }: { sessionId: string }) {
           <div className="rounded-(--radius) bg-surface-1 p-3">
             <p className="text-[11px] text-muted-foreground">Volume</p>
             <p className="mt-1 truncate font-mono text-[17px] tabular-nums">
-              {formatNumber(loggedVolume)} kg
+              {formatWeight(loggedVolume, weightUnit)}
             </p>
           </div>
         </div>
@@ -469,7 +473,7 @@ export function WorkoutLogger({ sessionId }: { sessionId: string }) {
             const isComplete =
               entry.sets.length > 0 && completedCount === entry.sets.length
             const previousSets = lastSetsForExercise(entry.exerciseId)
-            const previousLabel = lastTimeLabel(entry.exerciseId)
+            const previousLabel = lastTimeLabel(entry.exerciseId, weightUnit)
             const openWeight =
               entry.sets.find((setLog) => !setLog.completedAt)?.weightKg ??
               entry.sets[0]?.weightKg ??
@@ -478,7 +482,7 @@ export function WorkoutLogger({ sessionId }: { sessionId: string }) {
               new Set(entry.sets.map((setLog) => String(setLog.weightKg)))
                 .size > 1
             const collapsedSummary = isComplete
-              ? completedSetSummary(entry.sets)
+              ? completedSetSummary(entry.sets, weightUnit)
               : completedCount > 0
                 ? `${completedCount} of ${entry.sets.length} Sets`
                 : previousLabel
@@ -546,15 +550,22 @@ export function WorkoutLogger({ sessionId }: { sessionId: string }) {
                           type="number"
                           inputMode="decimal"
                           className="h-11 w-20 appearance-none rounded-md border border-input bg-background px-2 font-mono text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-                          value={openWeight ?? ""}
+                          value={
+                            openWeight == null
+                              ? ""
+                              : kgToDisplay(openWeight, weightUnit)
+                          }
                           onChange={(e) => {
                             const v = Number(e.target.value)
                             if (Number.isFinite(v))
-                              setWeightForExercise(entry.id, v)
+                              setWeightForExercise(
+                                entry.id,
+                                displayToKg(v, weightUnit)
+                              )
                           }}
                         />
                         <span className="text-sm text-muted-foreground">
-                          kg
+                          {weightUnit}
                         </span>
                       </label>
                     </div>
@@ -624,7 +635,9 @@ export function WorkoutLogger({ sessionId }: { sessionId: string }) {
                                   >
                                     {mixedWeights ? (
                                       <span className="text-[10px] leading-none opacity-80">
-                                        {s.weightKg ?? "BW"}
+                                        {formatWeight(s.weightKg, weightUnit, {
+                                          unit: false,
+                                        })}
                                       </span>
                                     ) : null}
                                     <span className="leading-none">
@@ -707,20 +720,30 @@ export function WorkoutLogger({ sessionId }: { sessionId: string }) {
                                           <input
                                             type="number"
                                             inputMode="decimal"
-                                            value={s.weightKg ?? ""}
+                                            value={
+                                              s.weightKg == null
+                                                ? ""
+                                                : kgToDisplay(
+                                                    s.weightKg,
+                                                    weightUnit
+                                                  )
+                                            }
                                             onChange={(event) => {
                                               const value = event.target.value
                                               updateSet(entry.id, s.id, {
                                                 weightKg:
                                                   value === ""
                                                     ? null
-                                                    : Number(value),
+                                                    : displayToKg(
+                                                        Number(value),
+                                                        weightUnit
+                                                      ),
                                               })
                                             }}
                                             className="h-11 min-w-0 flex-1 appearance-none rounded-md border border-input bg-background px-3 font-mono text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
                                           />
                                           <span className="shrink-0 text-sm text-muted-foreground">
-                                            kg
+                                            {weightUnit}
                                           </span>
                                         </span>
                                       </label>
@@ -765,7 +788,11 @@ export function WorkoutLogger({ sessionId }: { sessionId: string }) {
                             >
                               {prior ? (
                                 <span className="font-mono text-[11px] text-muted-foreground tabular-nums">
-                                  {formatPrior(prior.weightKg, prior.reps)}
+                                  {formatPrior(
+                                    prior.weightKg,
+                                    prior.reps,
+                                    weightUnit
+                                  )}
                                 </span>
                               ) : (
                                 <span className="sr-only">No previous set</span>
