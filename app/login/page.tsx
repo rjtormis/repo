@@ -1,11 +1,18 @@
 import type { Metadata } from "next"
-import { LoginScreen } from "@/components/login-screen"
+import { redirect } from "next/navigation"
+import { LoginScreen } from "@/components/authentication/login-screen"
+import { getServerSession } from "@/lib/session"
 
 export const metadata: Metadata = {
-  title: "Sync — Repo",
-  description: "Back up your training logs. Optional — your data stays on this device either way.",
+  title: "Login — Repo",
+  description: "Login to your Repo account.",
 }
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const session = await getServerSession()
+  if (session) {
+    redirect("/")
+  }
+
   return <LoginScreen />
 }

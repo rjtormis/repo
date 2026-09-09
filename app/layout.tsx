@@ -37,7 +37,7 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
@@ -53,7 +53,10 @@ export default function RootLayout({
         inter.variable
       )}
     >
-      <body className="min-h-dvh bg-background text-foreground">
+      <body
+        className="min-h-dvh bg-background text-foreground"
+        suppressHydrationWarning
+      >
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

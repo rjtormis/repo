@@ -1,0 +1,65 @@
+-- Generated from Functional Fitness Exercise Database v2.9.
+
+-- Source terms state personal use; confirm licensing before commercial redistribution.
+
+DO $$ BEGIN
+  CREATE TYPE "Difficulty" AS ENUM ('BEGINNER', 'NOVICE', 'INTERMEDIATE', 'ADVANCED', 'EXPERT', 'MASTER', 'GRAND_MASTER', 'LEGENDARY');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "MuscleGroup" AS ENUM ('ABDOMINALS', 'ABDUCTORS', 'ADDUCTORS', 'BACK', 'BICEPS', 'CALVES', 'CHEST', 'FOREARMS', 'GLUTES', 'HAMSTRINGS', 'HIP_FLEXORS', 'QUADRICEPS', 'SHINS', 'SHOULDERS', 'TRAPEZIUS', 'TRICEPS');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "PrimeMoverMuscle" AS ENUM ('ADDUCTOR_MAGNUS', 'ANTERIOR_DELTOID', 'BICEPS_BRACHII', 'BICEPS_FEMORIS', 'BRACHIORADIALIS', 'ERECTOR_SPINAE', 'GASTROCNEMIUS', 'GLUTEUS_MAXIMUS', 'GLUTEUS_MEDIUS', 'ILIOPSOAS', 'INFRASPINATUS', 'LATERAL_DELTOID', 'LATISSIMUS_DORSI', 'OBLIQUES', 'PECTORALIS_MAJOR', 'POSTERIOR_DELTOID', 'QUADRICEPS_FEMORIS', 'RECTUS_ABDOMINIS', 'SOLEUS', 'SUBSCAPULARIS', 'TIBIALIS_ANTERIOR', 'TRICEPS_BRACHII', 'UPPER_TRAPEZIUS', 'VASTUS_MEDIAS');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "BodyRegion" AS ENUM ('CORE', 'FULL_BODY', 'UPPER_BODY', 'LOWER_BODY');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE "Mechanics" AS ENUM ('COMPOUND', 'ISOLATION', 'PULL');
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+
+ALTER TYPE "MuscleGroup" ADD VALUE IF NOT EXISTS 'ADDUCTORS';
+
+CREATE TABLE IF NOT EXISTS "exercise" (
+  "id" TEXT NOT NULL,
+  "name" TEXT NOT NULL,
+  "slug" TEXT NOT NULL,
+  "shortDemo" TEXT,
+  "inDepthDemo" TEXT,
+  "difficulty" "Difficulty" NOT NULL DEFAULT 'BEGINNER',
+  "muscleGroups" "MuscleGroup" NOT NULL,
+  "primeMoverMuscle" "PrimeMoverMuscle" NOT NULL,
+  "equipments" TEXT[] NOT NULL,
+  "bodyRegion" "BodyRegion" NOT NULL DEFAULT 'FULL_BODY',
+  "mechanics" "Mechanics" NOT NULL DEFAULT 'COMPOUND',
+  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL,
+  "createdById" TEXT,
+  CONSTRAINT "exercise_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "exercise_slug_key" ON "exercise"("slug");
+
+DO $$ BEGIN
+  ALTER TABLE "exercise"
+    ADD CONSTRAINT "exercise_createdById_fkey"
+    FOREIGN KEY ("createdById") REFERENCES "user"("id")
+    ON DELETE CASCADE ON UPDATE CASCADE;
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+

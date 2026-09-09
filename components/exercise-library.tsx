@@ -1,13 +1,9 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import Link from "next/link"
-import {
-  IconChevronLeft,
-  IconPlus,
-  IconSearch,
-} from "@tabler/icons-react"
+import { IconPlus, IconSearch } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
+import { SubpageHeader } from "@/components/subpage-header"
 import { exercises as seedExercises } from "@/lib/demo-data"
 import {
   MUSCLE_GROUP_ORDER,
@@ -57,31 +53,21 @@ export function ExerciseLibrary() {
 
   return (
     <div className="flex min-w-0 flex-1 flex-col overflow-x-hidden">
-      <header className="flex min-h-11 items-center gap-1 pb-3">
-        <Link
-          href="/"
-          aria-label="Back"
-          className="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <IconChevronLeft className="size-4 rtl:rotate-180" stroke={1.5} />
-        </Link>
-        <h1 className="min-w-0 flex-1 truncate text-base font-medium">
-          Exercises
-        </h1>
+      <SubpageHeader title="Exercises">
         <Button
           size="sm"
           variant="secondary"
           className="min-h-11 gap-1"
           onClick={() => setCreating((v) => !v)}
         >
-          <IconPlus className="size-4" stroke={1.5} data-icon="inline-start" />
+          <IconPlus className="size-5" stroke={1.5} data-icon="inline-start" />
           Create
         </Button>
-      </header>
+      </SubpageHeader>
 
       <label className="relative mb-3 block">
         <IconSearch
-          className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          className="pointer-events-none absolute inset-s-3 top-1/2 size-4.5 -translate-y-1/2 text-muted-foreground"
           stroke={1.5}
         />
         <input
@@ -130,7 +116,11 @@ export function ExerciseLibrary() {
             className="min-h-11"
             onClick={() => createExercise(query.trim())}
           >
-            <IconPlus className="size-4" stroke={1.5} data-icon="inline-start" />
+            <IconPlus
+              className="size-5"
+              stroke={1.5}
+              data-icon="inline-start"
+            />
             Create {query.trim()}
           </Button>
         </div>

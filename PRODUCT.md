@@ -32,28 +32,32 @@ Vs Hevy/Strong: those products model programs and the user deviates from them. T
 
 Consistency is a GitHub-style year heatmap that is also history navigation — tapping a square opens that session.
 
-PWA-specific position: no install required, no signup to start, works offline, data exports in one tap.
+An account is required to use the product. Guest / anonymous logging is not a path.
+
+PWA-specific position: no install required; data exports in one tap.
 
 ## Operating Context
 
-- Gym floor: fast, one-handed logging between sets; offline-capable.
+- Gym floor: fast, one-handed logging between sets.
 - Home: review consistency and neglected work via heatmap/history.
 - Standalone PWA: no browser chrome; safe-area insets matter.
 - RTL is enabled; layouts must not assume LTR (heatmap direction and right-aligned values).
+- Sign-in is required before logging or reviewing history. Current sign-in surface is email magic link; Google OAuth is deferred (“soon”).
 
 ## Capabilities and Constraints
 
 ### Hard invariants
 
+- Sign-in is required to use the product. There is no “keep using without an account” product path.
 - Nothing is ever computed from session names. Names exist only so the user recognizes a card to copy. Every count, streak, square, and stat derives from logged exercises and sets. (Prior bug: name-matching reasoning; this rule is the fix.)
 - Storage is per set, never `{weight, reps, sets}`. Must represent 8/8/6, drop sets, and per-set weight changes.
 - Never punish. No red, no “you missed,” no “owed,” no streak-breaking guilt. Unmet targets stay hollow and reset weekly.
-- Offline-first: IndexedDB, not localStorage. No signup required to start logging.
 - Full data export.
 
 ### Technical (committed)
 
 - Next.js single app (monorepo removed), pnpm, shadcn preset `b2BnwltWS`.
+- Better Auth + Prisma (PostgreSQL) for identity; magic-link email is the live sign-in method.
 - RTL enabled; do not assume LTR layout.
 - Safe-area insets required for standalone mode.
 - `overscroll-behavior-y: contain` on the logging screen.
@@ -62,16 +66,18 @@ PWA-specific position: no install required, no signup to start, works offline, d
 
 - Notifications, social feed, AI coaching, nutrition, form video.
 - Scheduled / day-based programs. Weekly targets, if they ship, are counts, not days.
+- Apple / additional social OAuth. Google OAuth is marked coming soon — do not present it as working.
 
 ### Open decisions — flag, do not guess
 
 - App name. “Repo” is a suggestion, not a commitment. Folder name does not settle it.
+- Offline and local storage. Offline-first IndexedDB is no longer a confirmed invariant now that an account is required; whether logs work with no signal, and whether Prisma or the device is the source of truth, is unset.
 - What defines a PR (heaviest weight / best estimated 1RM / most reps at a weight).
 - Heatmap square intensity: tonnage vs set count, and fallback for bodyweight and cardio.
 - Muscle-group taxonomy and granularity. Grouping by muscle was desired; a coarse strip alongside session cards (plus primary-muscle-only tagging) was proposed but neither is confirmed.
 - Whether weekly targets ship in v1 at all.
 - Session duration means timing workouts, which means handling someone who forgets to hit Finish.
-- Empty state for a brand-new user.
+- Empty state for a brand-new signed-in user.
 
 ## Brand Commitments
 
@@ -90,7 +96,7 @@ No real testimonials, case studies, or marketing assets yet. Future work must no
 2. **History is the model** — No program object; free-form sessions and patterns in logged sets are the source of truth, never session names.
 3. **Per-set fidelity** — Sets are first-class; uneven reps, drops, and mid-exercise weight changes must be representable.
 4. **No guilt** — Consistency UI never punishes; unmet targets stay hollow and reset without streak-breaking shame.
-5. **Zero friction to start** — Offline-first IndexedDB, no signup, one-tap export; gym floor and PWA constraints are product, not polish.
+5. **Account required** — The product is used signed-in; guest logging is not a path. Export and gym-floor speed still matter; offline behavior is not assumed until decided.
 
 ## Accessibility & Inclusion
 

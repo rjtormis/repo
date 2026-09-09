@@ -41,6 +41,7 @@ export const pastSessions: Session[] = [
     name: "Push",
     startedAt: daysAgo(1, 17),
     finishedAt: daysAgo(1, 18),
+    prExerciseIds: ["ex-bench"],
     entries: [
       {
         id: "e1",
@@ -119,6 +120,32 @@ export const pastSessions: Session[] = [
           set("s19", 90, 8, daysAgo(5, 17)),
           set("s20", 90, 8, daysAgo(5, 17)),
           set("s21", 90, 8, daysAgo(5, 17)),
+        ],
+      },
+    ],
+  },
+  {
+    id: "ses-4",
+    name: "Push",
+    startedAt: daysAgo(10, 17),
+    finishedAt: daysAgo(10, 18),
+    entries: [
+      {
+        id: "e8",
+        exerciseId: "ex-bench",
+        sets: [
+          set("s22", 77.5, 8, daysAgo(10, 17)),
+          set("s23", 77.5, 8, daysAgo(10, 17)),
+          set("s24", 77.5, 6, daysAgo(10, 17)),
+        ],
+      },
+      {
+        id: "e9",
+        exerciseId: "ex-ohp",
+        sets: [
+          set("s25", 50, 8, daysAgo(10, 17)),
+          set("s26", 50, 7, daysAgo(10, 18)),
+          set("s27", 47.5, 8, daysAgo(10, 18)),
         ],
       },
     ],
