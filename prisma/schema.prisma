@@ -23,6 +23,7 @@ model User {
   workoutDays     Int              @default(0) // How many days a week the user wants to workout
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  totalExp        Int              @default(0)
   sessions        Session[]
   accounts        Account[]
   exercises       Exercise[]
@@ -179,8 +180,8 @@ model Exercise {
 model WorkoutSession {
   id          String  @id @default(uuid())
   name        String
-  slug        String  @unique
-  description String?
+  // slug        String  @unique
+  // description String?
 
   startedAt DateTime @default(now())
   createdAt DateTime @default(now())

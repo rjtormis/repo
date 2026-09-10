@@ -26,6 +26,11 @@ export const authClient = createAuthClient({
           required: false,
           defaultValue: 0,
         },
+        totalExp: {
+          type: "number",
+          required: false,
+          defaultValue: 0,
+        },
       },
     }),
   ],

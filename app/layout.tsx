@@ -4,6 +4,7 @@ import { Geist_Mono, Inter } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
+import TanStackQueryWrapper from "@/components/tanstack-query-wrapper"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
 
@@ -36,7 +37,6 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
   ],
 }
-
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -57,7 +57,9 @@ export default async function RootLayout({
         className="min-h-dvh bg-background text-foreground"
         suppressHydrationWarning
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <TanStackQueryWrapper>{children}</TanStackQueryWrapper>
+        </ThemeProvider>
       </body>
     </html>
   )

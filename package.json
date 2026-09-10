@@ -23,6 +23,7 @@
     "@prisma/client": "7.10.0",
     "@prisma/orm-postgres": "8.0.0-rc.8",
     "@tabler/icons-react": "^3.46.0",
+    "@tanstack/react-query": "^5.102.8",
     "better-auth": "^1.7.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
