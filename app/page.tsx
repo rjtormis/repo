@@ -7,6 +7,7 @@ export default async function HomePage() {
   if (!session) {
     redirect("/login")
   }
+  // console.log(session.user.id)
 
-  return <HomeScreen />
+  return <HomeScreen userId={session.user.id} />
 }
