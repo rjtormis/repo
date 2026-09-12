@@ -2,6 +2,8 @@ import { getOrCreateDailyMotivation } from "@/actions/motivation"
 import { getPersonalRecords } from "@/actions/records"
 import { getSessions } from "@/actions/sessions"
 import { getUserStreak } from "@/actions/streak"
+import { Unauthorized } from "@/lib/api/errors"
+import { withErrorHandler } from "@/lib/api/handler"
 import { auth } from "@/lib/auth"
 import type { HeatmapDatum } from "@/types/dashboard.types"
 import { headers } from "next/headers"
@@ -31,19 +33,12 @@ function levelProgress(totalXp: number) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandler(async (request: NextRequest) => {
   const session = await auth.api.getSession({
     headers: await headers(),
   })
 
-  if (!session) {
-    return NextResponse.json(
-      {
-        message: "Please sign in to create workout",
-      },
-      { status: 400 }
-    )
-  }
+  if (!session) throw Unauthorized()
 
   const { id: userId } = session.user
 
@@ -99,4 +94,4 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json(data, { status: 200 })
-}
+})
