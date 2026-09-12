@@ -21,6 +21,11 @@ export type ExercisePrevious = {
   achievedAt: string
 }
 
+export type PreviousSet = {
+  weightKg: number | null
+  reps: number
+}
+
 export type VolumePoint = {
   sessionId: string
   volume: number
@@ -38,5 +43,6 @@ export type WorkoutSessionDetail = {
   userId: string
   exercises: SessionExerciseRow[]
   previousByExercise?: Record<string, ExercisePrevious | null>
+  previousSetsByExercise?: Record<string, PreviousSet[]>
   volumeTrend?: VolumePoint[]
 }

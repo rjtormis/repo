@@ -36,12 +36,17 @@ export default function HomeScreen() {
   const [endDate, setEndDate] = useState<Date | null>(null)
   const [clock, setClock] = useState<Date | null>(null)
   const [fit, setFit] = useState({ rangeDays: TARGET_DAYS, cellSize: 11 })
-  const [activeSession] = useState<ActiveSession | null>(null)
-
   const [weekly] = useState<WeeklyTarget>({ done: 3, goal: 5, daysLeft: 4 })
 
   const today = new Date().toLocaleDateString("en-CA")
   const { data: stats } = useGetDashboardStats(today)
+  const activeSession: ActiveSession | null = stats?.activeSession
+    ? {
+        id: stats.activeSession.id,
+        name: stats.activeSession.name,
+        startedAt: new Date(stats.activeSession.startedAt).getTime(),
+      }
+    : null
 
   const workoutSessions = stats?.recentSessions ?? []
   const heatmap = stats?.heatmap ?? []
@@ -128,7 +133,6 @@ export default function HomeScreen() {
       size="lg"
       className="h-12 min-h-11 w-full text-base"
       onClick={async () => {
-        console.log("clicked")
         const result = await mutateAsync()
         router.push(`/dashboard/session/${result.id}`)
       }}

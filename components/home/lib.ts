@@ -113,8 +113,8 @@ export function exercisePreview(labels: string[]): string {
 }
 
 export function sessionSize(card: SessionCard): string {
-  const exerciseLabel = card.exercises.length === 1 ? "exercise" : "exercises"
-  const setLabel = card.setCount === 1 ? "set" : "sets"
+  const exerciseLabel = card.exercises.length === 1 ? "Exercise" : "Exercises"
+  const setLabel = card.setCount === 1 ? "Set" : "Sets"
   return `${card.exercises.length} ${exerciseLabel} · ${card.setCount} ${setLabel}`
 }
 

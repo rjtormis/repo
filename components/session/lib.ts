@@ -95,3 +95,34 @@ export function formatHeaderDate(session: WorkoutSessionDetail): string {
 }
 
 const MAX_SESSION_MINUTES = 180
+
+export function formatElapsedClock(ms: number): string {
+  const totalSec = Math.max(0, Math.floor(ms / 1000))
+  const h = Math.floor(totalSec / 3600)
+  const m = Math.floor((totalSec % 3600) / 60)
+  const s = totalSec % 60
+  if (h > 0) {
+    return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
+  }
+  return `${m}:${String(s).padStart(2, "0")}`
+}
+
+export function formatPriorSet(
+  weightKg: number | null,
+  reps: number,
+  unit: WeightUnit
+): string {
+  if (weightKg == null) return `BW × ${reps}`
+  return `${formatWeight(weightKg, unit, { unit: false })} × ${reps}`
+}
+
+export function lastTimeLabel(
+  previous: { weightKg: number | null }[] | undefined,
+  unit: WeightUnit
+): string | null {
+  const weight = previous?.[0]?.weightKg
+  if (previous == null || previous.length === 0) return null
+  return weight == null
+    ? "Last time: BW"
+    : `Last time: ${formatWeight(weight, unit)}`
+}
