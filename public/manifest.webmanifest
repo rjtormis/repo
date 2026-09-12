@@ -53,5 +53,32 @@
       "type": "image/png",
       "purpose": "any"
     }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/dashboard-mobile.png",
+      "sizes": "625x1100",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Home"
+    },
+    {
+      "src": "/screenshots/login-mobile.png",
+      "sizes": "491x824",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Sign in"
+    }
+  ],
+  "categories": [
+    "entertainment",
+    "fitness",
+    "health &amp; fitness",
+    "networking",
+    "personalization",
+    "productivity",
+    "social",
+    "sports",
+    "video"
   ]
 }
