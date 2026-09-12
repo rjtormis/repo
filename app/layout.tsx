@@ -8,11 +8,20 @@ import { cn } from "@/lib/utils"
 import { PwaProvider } from "@/components/pwa/provider"
 import TanStackQueryWrapper from "@/components/tanstack-query-wrapper"
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-inter",
+  display: "swap",
+  adjustFontFallback: false,
+})
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
-  variable: "--font-mono",
+  weight: ["400", "500", "600"],
+  variable: "--font-geist-mono",
+  display: "swap",
+  adjustFontFallback: false,
 })
 
 export const metadata: Metadata = {
@@ -22,10 +31,13 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
+      { url: "/icons/icon-96x96.png", sizes: "96x96", type: "image/png" },
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
       { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+    apple: [
+      { url: "/icons/icon-180x180.png", sizes: "180x180", type: "image/png" },
+    ],
   },
   appleWebApp: {
     capable: true,
@@ -57,10 +69,10 @@ export default async function RootLayout({
       lang="en"
       suppressHydrationWarning
       className={cn(
-        "bg-background antialiased",
+        inter.variable,
         fontMono.variable,
-        "font-sans",
-        inter.variable
+        inter.className,
+        "bg-background font-sans antialiased"
       )}
     >
       <body

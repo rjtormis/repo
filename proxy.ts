@@ -6,6 +6,9 @@ const publicPaths = [
   "/sign-up",
   "/manifest.webmanifest",
   "/sw.js",
+  "/icon.png",
+  "/apple-icon.png",
+  "/apple-touch-icon.png",
 ]
 
 export function proxy(request: NextRequest) {
