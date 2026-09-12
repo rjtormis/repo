@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSessionCookie } from "better-auth/cookies"
 
-const publicPaths = ["/login", "/sign-up"]
+const publicPaths = [
+  "/login",
+  "/sign-up",
+  "/manifest.webmanifest",
+  "/sw.js",
+]
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -19,6 +24,6 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest\\.webmanifest|sw\\.js|icons/|.*\\..*).*)",
   ],
 }

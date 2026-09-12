@@ -4,7 +4,7 @@ import { LoginScreen } from "@/components/authentication/login-screen"
 import { getServerSession } from "@/lib/session"
 
 export const metadata: Metadata = {
-  title: "Login — Repo",
+  title: "Repo",
   description: "Login to your Repo account.",
 }
 

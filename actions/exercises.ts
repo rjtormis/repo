@@ -116,7 +116,8 @@ async function getActiveWorkout(
   )
   const cutoff = Date.now() - 18 * 60 * 60 * 1000
   const fresh =
-    latest.updatedAt.getTime() >= cutoff || latest.startedAt.getTime() >= cutoff
+    latest.updatedAt.getTime() >= cutoff ||
+    (latest.startedAt?.getTime() ?? 0) >= cutoff
   if (hasCompleted && !fresh) return null
 
   return {
@@ -233,7 +234,7 @@ export const getExerciseDetail = async (id: string) => {
         weightKg: weightKg(set.weight),
         reps: set.reps,
       }))
-    if (sets.length === 0) continue
+    if (sets.length === 0 || !row.workoutSession.startedAt) continue
     history.push({
       sessionId: row.workoutSessionId,
       sessionName: row.workoutSession.name,

@@ -59,7 +59,9 @@ export function PickupList({ cards }: { cards: SessionCard[] }) {
                     {sessionSize(card)}
                   </span>
                   <span className="shrink-0 font-mono tabular-nums">
-                    {formatAgo(daysSince(new Date(card.lastDoneAt)))}
+                    {formatAgo(
+                      daysSince(new Date(card.lastDoneAt ?? Date.now()))
+                    )}
                   </span>
                 </div>
               </Link>

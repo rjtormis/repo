@@ -17,9 +17,10 @@ export async function getUserStreak({
 }) {
   const sessions = await getSessions({ userId, position: "desc" })
   const weeksWithWork = new Set(
-    sessions
-      .filter((s) => s.setCount > 0)
-      .map((s) => weekKey(new Date(s.lastDoneAt), weekStartsOn))
+    sessions.flatMap((s) => {
+      if (s.setCount <= 0 || !s.lastDoneAt) return []
+      return [weekKey(new Date(s.lastDoneAt), weekStartsOn)]
+    })
   )
 
   const today = new Date(`${date}T12:00:00`)

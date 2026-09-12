@@ -127,16 +127,18 @@ export function daysSince(lastDoneAt: Date, today = new Date()): number {
 }
 
 export function orderPickupCards(cards: SessionCard[]): SessionCard[] {
-  const logged = cards.filter((card) => card.setCount > 0)
+  const logged = cards.filter((card) => card.setCount > 0 && card.lastDoneAt)
   if (logged.length === 0) return []
   const sorted = [...logged].sort(
     (a, b) =>
-      daysSince(new Date(b.lastDoneAt)) - daysSince(new Date(a.lastDoneAt))
+      daysSince(new Date(b.lastDoneAt ?? 0)) -
+      daysSince(new Date(a.lastDoneAt ?? 0))
   )
   const [suggested, ...rest] = sorted
   rest.sort(
     (a, b) =>
-      daysSince(new Date(b.lastDoneAt)) - daysSince(new Date(a.lastDoneAt))
+      daysSince(new Date(b.lastDoneAt ?? 0)) -
+      daysSince(new Date(a.lastDoneAt ?? 0))
   )
   return [suggested, ...rest].slice(0, 3)
 }

@@ -38,3 +38,7 @@ node_modules/
 dist/
 
 /generated/prisma
+
+# Serwist
+public/sw*
+public/swe-worker*

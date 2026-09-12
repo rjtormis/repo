@@ -4,7 +4,7 @@ export type SessionCard = {
   exercises: string[]
   exerciseCount: number
   setCount: number
-  lastDoneAt: string
+  lastDoneAt: string | Date | null
 }
 
 export type ActiveSession = {
