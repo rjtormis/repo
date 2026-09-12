@@ -13,7 +13,7 @@ export function VolumeTrend({
 
   return (
     <section className="mt-4" aria-label="Volume trend">
-      <p className="mb-2 text-[11px] text-muted-foreground">volume</p>
+      <p className="mb-2 text-[11px] text-muted-foreground">Volume</p>
       <div className="flex h-12 items-end gap-1 rounded-xl bg-surface-1 px-3 py-2">
         {points.map((point) => {
           const current = point.sessionId === currentId

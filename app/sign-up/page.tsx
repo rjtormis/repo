@@ -5,7 +5,7 @@ import { getServerSession } from "@/lib/session"
 export default async function SignUpPage() {
   const session = await getServerSession()
   if (session) {
-    redirect("/")
+    redirect("/dashboard")
   }
 
   return <SignUpScreen />

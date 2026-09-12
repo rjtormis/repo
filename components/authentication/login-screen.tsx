@@ -89,7 +89,7 @@ export function LoginScreen() {
     }
 
     setUnverifiedEmail("")
-    router.replace("/")
+    router.replace("/dashboard")
     router.refresh()
   }
 
@@ -99,7 +99,7 @@ export function LoginScreen() {
     setResending(true)
     const { error } = await authClient.sendVerificationEmail({
       email: unverifiedEmail,
-      callbackURL: "/",
+      callbackURL: "/dashboard",
     })
     setResending(false)
 
@@ -285,6 +285,21 @@ export function LoginScreen() {
               className="text-primary underline-offset-4 hover:text-primary hover:underline"
             >
               Sign up
+            </Link>
+          </p>
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            <Link
+              href="/privacy"
+              className="underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Privacy
+            </Link>
+            {" · "}
+            <Link
+              href="/terms-and-condition"
+              className="underline-offset-4 hover:text-foreground hover:underline"
+            >
+              Terms
             </Link>
           </p>
 

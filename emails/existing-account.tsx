@@ -10,6 +10,6 @@ export default function ExistingAccountEmail({
 }
 
 ExistingAccountEmail.PreviewProps = {
-  url: "https://repo.app/login",
+  url: "https://repo.app/",
   email: "you@example.com",
 } satisfies MagicLinkEmailProps

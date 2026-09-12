@@ -33,7 +33,7 @@ export function ExerciseDetail({ exerciseId }: { exerciseId: string }) {
   if (isPending) {
     return (
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <SubpageHeader title="…" backHref="/exercises" />
+        <SubpageHeader title="…" backHref="/dashboard/exercises" />
         <p className="px-2 py-6 text-center text-sm text-muted-foreground">
           Loading…
         </p>
@@ -44,7 +44,7 @@ export function ExerciseDetail({ exerciseId }: { exerciseId: string }) {
   if (isError || !data) {
     return (
       <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <SubpageHeader title="Exercise" backHref="/exercises" />
+        <SubpageHeader title="Exercise" backHref="/dashboard/exercises" />
         <p className="px-2 py-6 text-center text-sm text-muted-foreground">
           This exercise isn’t in the catalog, or the link is old.
         </p>
@@ -65,14 +65,14 @@ export function ExerciseDetail({ exerciseId }: { exerciseId: string }) {
 
   async function handleAdd() {
     if (activeSession?.alreadyAdded) {
-      router.push(`/session/${activeSession.id}`)
+      router.push(`/dashboard/session/${activeSession.id}`)
       return
     }
     const sessionId = await addToWorkout.mutateAsync({
       sessionId: activeSession?.id,
       exerciseId,
     })
-    router.push(`/session/${sessionId}`)
+    router.push(`/dashboard/session/${sessionId}`)
   }
 
   const extraHistory = history.filter(
@@ -84,7 +84,7 @@ export function ExerciseDetail({ exerciseId }: { exerciseId: string }) {
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <SubpageHeader
         title={exercise.name}
-        backHref="/exercises"
+        backHref="/dashboard/exercises"
         hideTitle
       />
 
@@ -194,7 +194,7 @@ function RecordCard({
         Personal record
       </h3>
       <Link
-        href={`/session/${record.sessionId}`}
+        href={`/dashboard/session/${record.sessionId}`}
         className={cn(
           "flex min-h-11 flex-col gap-1 rounded-xl bg-surface-1 px-3.5 py-3.5 transition-colors",
           "hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
@@ -244,7 +244,7 @@ function HistoryRow({
   return (
     <li>
       <Link
-        href={`/session/${entry.sessionId}`}
+        href={`/dashboard/session/${entry.sessionId}`}
         className={cn(
           "flex min-h-11 flex-col gap-1 rounded-xl bg-surface-1 px-3.5 py-3.5 transition-colors",
           "hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"

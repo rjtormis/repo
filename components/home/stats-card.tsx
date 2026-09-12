@@ -48,13 +48,13 @@ export function StatsCard({
         accent={motivation?.accent}
         author={motivation?.author}
       />
-      <div className="mt-3 flex items-start justify-between gap-3">
+      <div className="mt-3 flex items-center justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-xl leading-none font-semibold tabular-nums">
             {sessionsReady ? sessions : "\u00a0"}
           </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {sessions === 1 ? "session done" : "sessions done"}
+          <p className="mt- text-sm text-muted-foreground">
+            {sessions === 1 ? "Session done" : "Sessions done"}
           </p>
         </div>
         <WeekRing done={weekDone} goal={weekGoal} />

@@ -101,13 +101,13 @@ export default function HomeScreen() {
 
   function resumeWorkout() {
     if (!activeSession) return
-    router.push(`/session/${activeSession.id}`)
+    router.push(`/dashboard/session/${activeSession.id}`)
   }
 
   function onCellClick(cell: HeatmapCell) {
     if (cell.value <= 0 || cell.disabled || cell.future) return
     const ids = ["ses-1", "ses-2", "ses-3"] as const
-    router.push(`/session/${ids[cell.date.getDate() % ids.length]}`)
+    router.push(`/dashboard/session/${ids[cell.date.getDate() % ids.length]}`)
   }
 
   const cta = activeSession ? (
@@ -130,7 +130,7 @@ export default function HomeScreen() {
       onClick={async () => {
         console.log("clicked")
         const result = await mutateAsync()
-        router.push(`/session/${result.id}`)
+        router.push(`/dashboard/session/${result.id}`)
       }}
     >
       <IconPlus data-icon="inline-start" className="size-5" stroke={1.5} />

@@ -9,7 +9,7 @@ export default async function ExerciseDetailPage({
   params: Promise<{ id: string }>
 }) {
   const session = await getServerSession()
-  if (!session) redirect("/login")
+  if (!session) redirect("/")
 
   const { id } = await params
 

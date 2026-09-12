@@ -5,7 +5,7 @@ import { getServerSession } from "@/lib/session"
 
 export default async function ExercisesPage() {
   const session = await getServerSession()
-  if (!session) redirect("/login")
+  if (!session) redirect("/")
 
   return (
     <Shell className="h-dvh max-h-dvh overflow-hidden">

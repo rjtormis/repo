@@ -7,6 +7,7 @@ import {
   IconBarbell,
   IconChartBar,
   IconHistory,
+  IconHome,
   IconLogout,
   IconMenu2,
   IconSettings,
@@ -29,14 +30,21 @@ const rowClassName =
   "flex min-h-12 w-full items-center gap-3.5 rounded-lg px-3 text-start text-[15px] transition-colors hover:bg-muted active:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
 
 const NAV_ITEMS = [
-  { href: "/exercises", label: "Exercises", icon: IconBarbell },
-  { href: "/sessions", label: "Sessions", icon: IconHistory },
-  { href: "/leaderboard", label: "Leaderboard", icon: IconChartBar },
+  { href: "/dashboard", label: "Dashboard", icon: IconHome },
+  { href: "/dashboard/exercises", label: "Exercises", icon: IconBarbell },
+  { href: "/dashboard/sessions", label: "Sessions", icon: IconHistory },
+  { href: "/dashboard/leaderboard", label: "Leaderboard", icon: IconChartBar },
 ] as const
 
 function pathIsActive(pathname: string, href: string) {
-  if (href === "/sessions") {
-    return pathname === "/sessions" || pathname.startsWith("/session/")
+  if (href === "/dashboard") {
+    return pathname === "/dashboard"
+  }
+  if (href === "/dashboard/sessions") {
+    return (
+      pathname === "/dashboard/sessions" ||
+      pathname.startsWith("/dashboard/session/")
+    )
   }
   return pathname === href || pathname.startsWith(`${href}/`)
 }
@@ -58,7 +66,7 @@ function AccountFooter({ onClose }: { onClose: () => void }) {
     setSigningOut(true)
     await authClient.signOut()
     onClose()
-    router.push("/login")
+    router.push("/")
   }
 
   if (isPending) {
@@ -80,7 +88,7 @@ function AccountFooter({ onClose }: { onClose: () => void }) {
   if (!user) {
     return (
       <Link
-        href="/login"
+        href="/"
         className="flex min-h-16 w-full items-center gap-3.5 rounded-lg px-3 text-start transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:bg-muted/80"
         onClick={onClose}
       >
@@ -167,7 +175,7 @@ export function NavigationMenu() {
 
         <div className="px-3 pt-4 pb-1">
           <Link
-            href="/"
+            href="/dashboard"
             className="inline-flex rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             onClick={() => setOpen(false)}
           >
@@ -200,11 +208,13 @@ export function NavigationMenu() {
           <div className="my-2 border-t border-border" aria-hidden />
 
           <Link
-            href="/settings"
-            aria-current={pathIsActive(pathname, "/settings") ? "page" : undefined}
+            href="/dashboard/settings"
+            aria-current={
+              pathIsActive(pathname, "/dashboard/settings") ? "page" : undefined
+            }
             className={cn(
               rowClassName,
-              pathIsActive(pathname, "/settings") && "bg-muted"
+              pathIsActive(pathname, "/dashboard/settings") && "bg-muted"
             )}
             onClick={() => setOpen(false)}
           >

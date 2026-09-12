@@ -1,13 +1,18 @@
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
-import HomeScreen from "@/components/home-screen"
+import { LoginScreen } from "@/components/authentication/login-screen"
 import { getServerSession } from "@/lib/session"
 
-export default async function HomePage() {
-  const session = await getServerSession()
-  if (!session) {
-    redirect("/login")
-  }
-  // console.log(session.user.id)
+export const metadata: Metadata = {
+  title: "Repo",
+  description: "Login to your Repo account.",
+}
 
-  return <HomeScreen />
+export default async function LoginPage() {
+  const session = await getServerSession()
+  if (session) {
+    redirect("/dashboard")
+  }
+
+  return <LoginScreen />
 }

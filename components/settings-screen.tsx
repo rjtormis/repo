@@ -461,7 +461,7 @@ function AccountSettings({
       return
     }
     onDeleteOpenChange(false)
-    router.replace("/login")
+    router.replace("/")
     router.refresh()
   }
 

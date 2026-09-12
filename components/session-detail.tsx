@@ -86,7 +86,7 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
 
   const handleDeleteSession = async () => {
     await deleteSession()
-    router.push("/")
+    router.push("/dashboard")
   }
 
   const handleStartFinishWorkout = async () => {
@@ -99,7 +99,7 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="flex min-w-0 items-start gap-1">
           <Link
-            href="/"
+            href="/dashboard"
             aria-label="Back"
             className="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
           >

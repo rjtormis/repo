@@ -32,7 +32,7 @@ export function SessionHeader({
     <header>
       <div className="flex min-w-0 items-center gap-1">
         <Link
-          href="/"
+          href="/dashboard"
           aria-label="Back"
           className="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
         >

@@ -60,7 +60,7 @@ export const auth = betterAuth({
         to: user.email,
         subject: "You already have an account",
         react: ExistingAccountEmail({
-          url: `${origin}/login`,
+          url: `${origin}/`,
           email: user.email,
         }),
       })
