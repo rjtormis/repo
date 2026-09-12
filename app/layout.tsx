@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
 import { PwaProvider } from "@/components/pwa/provider"
 import TanStackQueryWrapper from "@/components/tanstack-query-wrapper"
+import { Analytics } from "@vercel/analytics/next"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -80,6 +81,7 @@ export default async function RootLayout({
         suppressHydrationWarning
       >
         <Script src="/pwa-capture.js" strategy="beforeInteractive" />
+        <Analytics />
         <ThemeProvider>
           <PwaProvider>
             <TanStackQueryWrapper>{children}</TanStackQueryWrapper>
