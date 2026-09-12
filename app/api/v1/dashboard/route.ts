@@ -2,8 +2,8 @@ import { getOrCreateDailyMotivation } from "@/actions/motivation"
 import { getPersonalRecords } from "@/actions/records"
 import { getSessions } from "@/actions/sessions"
 import { getUserStreak } from "@/actions/streak"
-import type { HeatmapDatum } from "@/types/dashboard.types"
 import { auth } from "@/lib/auth"
+import type { HeatmapDatum } from "@/types/dashboard.types"
 import { headers } from "next/headers"
 import { NextRequest, NextResponse } from "next/server"
 
@@ -16,7 +16,7 @@ function sessionDay(iso: Date | string) {
 
 const XP_PER_SESSION = 40
 
-export function levelProgress(totalXp: number) {
+function levelProgress(totalXp: number) {
   const xp = Math.max(0, totalXp)
   let current = 1
   while (xp >= XP_FOR_LEVEL(current + 1)) current++
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
 
   const heatData = Object.values(
     loggedSessions.reduce<Record<string, HeatmapDatum>>((acc, s) => {
-      const date = sessionDay(s.lastDoneAt)
+      const date = sessionDay(s.lastDoneAt ?? new Date().toISOString())
       acc[date] ??= { date, value: 0 }
       acc[date].value = Math.min(3, acc[date].value + 1)
       return acc
