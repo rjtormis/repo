@@ -1,6 +1,40 @@
 import "dotenv/config"
+import { readFileSync } from "node:fs"
+import { dirname, join } from "node:path"
+import { fileURLToPath } from "node:url"
+import { Client } from "pg"
 import { PrismaPg } from "@prisma/adapter-pg"
 import { PrismaClient } from "../generated/prisma/client"
+
+const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), "migrations")
+
+async function seedExerciseCatalog(databaseUrl: string) {
+  const client = new Client({ connectionString: databaseUrl })
+  await client.connect()
+  try {
+    const catalog = readFileSync(
+      join(migrationsDir, "20260908114100_seed_exercise_catalog/migration.sql"),
+      "utf8"
+    )
+    await client.query(catalog)
+
+    const commonAndClubbell = readFileSync(
+      join(
+        migrationsDir,
+        "20260912120000_exercise_common_and_clubbell_fix/migration.sql"
+      ),
+      "utf8"
+    )
+    await client.query(commonAndClubbell)
+
+    const { rows } = await client.query<{ count: string }>(
+      'SELECT COUNT(*)::text AS count FROM "exercise"'
+    )
+    return Number(rows[0]?.count ?? 0)
+  } finally {
+    await client.end()
+  }
+}
 
 const messages: {
   lead: string
@@ -195,6 +229,9 @@ async function main() {
   })
 
   try {
+    const exerciseCount = await seedExerciseCatalog(databaseUrl)
+    console.log(`Seeded exercise catalog (${exerciseCount} rows).`)
+
     for (const message of messages) {
       await prisma.motivationMessage.upsert({
         where: {
@@ -217,6 +254,37 @@ async function main() {
     }
 
     console.log(`Seeded ${messages.length} motivation messages.`)
+
+    const offsets = [2, 5, 9, 13, 18, 23, 28, 34]
+    const users = await prisma.user.findMany({ select: { id: true } })
+    let spread = 0
+
+    for (const user of users) {
+      const sessions = await prisma.workoutSession.findMany({
+        where: {
+          userId: user.id,
+          exercises: { some: { workoutSets: { some: {} } } },
+        },
+        orderBy: { createdAt: "asc" },
+        select: { id: true },
+      })
+
+      for (const [index, row] of sessions.entries()) {
+        const daysAgo = offsets[index] ?? 40 + (index - offsets.length) * 5
+        const at = new Date()
+        at.setHours(18, 0, 0, 0)
+        at.setDate(at.getDate() - daysAgo)
+        await prisma.workoutSession.update({
+          where: { id: row.id },
+          data: { startedAt: at, updatedAt: at },
+        })
+        spread += 1
+      }
+    }
+
+    if (spread > 0) {
+      console.log(`Spread ${spread} workout sessions across recent weeks.`)
+    }
   } finally {
     await prisma.$disconnect()
   }

@@ -21,14 +21,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import type { HeatmapDatum } from "@/types/dashboard.types"
 import { ChevronDown } from "lucide-react"
 import * as React from "react"
 
-export type HeatmapDatum = {
-  date: string | Date
-  value: number
-  meta?: unknown
-}
+export type { HeatmapDatum }
 
 export type HeatmapCell = {
   date: Date

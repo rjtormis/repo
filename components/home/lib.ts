@@ -8,14 +8,7 @@ import {
   WEEK_STARTS_ON,
 } from "@/components/home/constants"
 import type { SessionCard } from "@/components/home/types"
-import {
-  addDays,
-  startOfDayLocal,
-  startOfWeekLocal,
-  toDateKey,
-} from "@/lib/dates"
-
-export { addDays, startOfDayLocal, startOfWeekLocal, toDateKey }
+import { addDays, startOfDayLocal, startOfWeekLocal } from "@/lib/dates"
 
 export function exactWeekColumns(
   end: Date,
@@ -125,61 +118,6 @@ export function sessionSize(card: SessionCard): string {
   return `${card.exercises.length} ${exerciseLabel} · ${card.setCount} ${setLabel}`
 }
 
-export function buildRollingActivity(
-  today: Date,
-  rangeDays: number
-): Map<string, number> {
-  const map = new Map<string, number>()
-  const start = addDays(today, -(rangeDays - 1))
-
-  for (let i = 0; i < rangeDays; i++) {
-    const day = addDays(start, i)
-    const dow = day.getDay()
-    const week = Math.floor(i / 7)
-
-    if (week % 5 === 2) continue
-
-    const trains =
-      dow === 1 ||
-      dow === 4 ||
-      (dow === 3 && week % 3 === 0) ||
-      (dow === 6 && week % 4 === 0)
-    if (!trains) continue
-
-    const intensity = (1 + ((week + dow) % 3)) as 1 | 2 | 3
-    map.set(toDateKey(day), intensity)
-  }
-
-  const gapStart = addDays(today, -28)
-  for (let i = 0; i < 10; i++) {
-    map.delete(toDateKey(addDays(gapStart, i)))
-  }
-
-  return map
-}
-
-export function weekStreakFromActivity(
-  today: Date,
-  activity: Map<string, number>
-): number {
-  let streak = 0
-  const cursor = new Date(today)
-  cursor.setHours(12, 0, 0, 0)
-
-  for (let w = 0; w < 52; w++) {
-    let hit = false
-    for (let d = 0; d < 7; d++) {
-      if ((activity.get(toDateKey(addDays(cursor, -d - w * 7))) ?? 0) > 0) {
-        hit = true
-        break
-      }
-    }
-    if (!hit) break
-    streak += 1
-  }
-  return streak
-}
-
 const MS_PER_DAY = 86_400_000
 
 export function daysSince(lastDoneAt: Date, today = new Date()): number {
@@ -189,8 +127,9 @@ export function daysSince(lastDoneAt: Date, today = new Date()): number {
 }
 
 export function orderPickupCards(cards: SessionCard[]): SessionCard[] {
-  if (cards.length === 0) return []
-  const sorted = [...cards].sort(
+  const logged = cards.filter((card) => card.setCount > 0)
+  if (logged.length === 0) return []
+  const sorted = [...logged].sort(
     (a, b) =>
       daysSince(new Date(b.lastDoneAt)) - daysSince(new Date(a.lastDoneAt))
   )

@@ -18,3 +18,18 @@ export type WeeklyTarget = {
   goal: number
   daysLeft: number
 }
+
+export type PersonalRecord = {
+  exerciseId: string
+  exerciseName: string
+  weightKg: number
+  reps: number
+  sessionId: string
+  achievedAt: string
+  previous: {
+    sessionId: string
+    weightKg: number
+    reps: number
+    achievedAt: string
+  } | null
+}

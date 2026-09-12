@@ -2,8 +2,8 @@ import type { RefObject } from "react"
 import {
   HeatmapCalendar,
   type HeatmapCell,
-  type HeatmapDatum,
 } from "@/components/heatmap-calendar"
+import type { HeatmapDatum } from "@/types/dashboard.types"
 import {
   CELL_GAP,
   HEAT_LEVELS,

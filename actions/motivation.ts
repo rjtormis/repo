@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma"
 
+// ===== GET =====
+
 export const getOrCreateDailyMotivation = async ({
   userId,
   date,

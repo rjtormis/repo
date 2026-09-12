@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { IconPlus } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
-import type { HeatmapCell, HeatmapDatum } from "@/components/heatmap-calendar"
+import type { HeatmapCell } from "@/components/heatmap-calendar"
 import { NavigationMenu } from "@/components/navigation-menu"
 import {
   PAGE_PAD_STYLE,
@@ -18,25 +18,19 @@ import {
   greetingForHour,
   monthsFromDays,
   orderPickupCards,
-  progressFromSessions,
-  weekStreakFromActivity,
 } from "@/components/home/lib"
-import { PickupList } from "@/components/home/pickup-list"
+import { HistoryPager } from "@/components/home/history-pager"
 import { StatsCard } from "@/components/home/stats-card"
 import { TrainingHeatmap } from "@/components/home/training-heatmap"
-import type {
-  ActiveSession,
-  SessionCard,
-  WeeklyTarget,
-} from "@/components/home/types"
+import type { ActiveSession, WeeklyTarget } from "@/components/home/types"
 import { useGetDashboardStats } from "@/hooks/tanstack/dashboard"
 import { useUserPrefs } from "@/lib/user-prefs"
 import { cn } from "@/lib/utils"
 import { useCreateWorkoutSessions } from "@/hooks/tanstack/session"
 
-export default function HomeScreen({ userId }: { userId: string }) {
+export default function HomeScreen() {
   const router = useRouter()
-  const { weekStartsOn, workoutDays } = useUserPrefs()
+  const { weekStartsOn, workoutDays, weightUnit } = useUserPrefs()
   const heatMeasureRef = useRef<HTMLDivElement>(null)
   const [now] = useState(() => Date.now())
   const [endDate, setEndDate] = useState<Date | null>(null)
@@ -98,17 +92,16 @@ export default function HomeScreen({ userId }: { userId: string }) {
   const monthsShown = monthsFromDays(fit.rangeDays)
   const weekDone = emptyMode ? 0 : weekly.done
   const weekGoal = workoutDays > 0 ? workoutDays : weekly.goal
-  const level = progressFromSessions(displaySessions)
+  const xpToNext = Math.max(
+    0,
+    (stats?.level?.xpForNextLevel ?? 0) - (stats?.level?.xpIntoLevel ?? 0)
+  )
   const greeting = clock ? greetingForHour(clock.getHours()) : null
   const dateLabel = clock ? formatHomeDate(clock) : null
 
-  function startWorkout() {
-    router.push(`/workout/live-${Date.now().toString(36)}`)
-  }
-
   function resumeWorkout() {
     if (!activeSession) return
-    router.push(`/workout/${activeSession.id}`)
+    router.push(`/session/${activeSession.id}`)
   }
 
   function onCellClick(cell: HeatmapCell) {
@@ -134,9 +127,10 @@ export default function HomeScreen({ userId }: { userId: string }) {
     <Button
       size="lg"
       className="h-12 min-h-11 w-full text-base"
-      onClick={() => {
+      onClick={async () => {
         console.log("clicked")
-        mutateAsync()
+        const result = await mutateAsync()
+        router.push(`/session/${result.id}`)
       }}
     >
       <IconPlus data-icon="inline-start" className="size-5" stroke={1.5} />
@@ -173,7 +167,7 @@ export default function HomeScreen({ userId }: { userId: string }) {
           weekDone={weekDone}
           weekGoal={weekGoal}
           level={stats?.level}
-          xpToNext={level.xpToNext}
+          xpToNext={emptyMode ? 0 : xpToNext}
         />
 
         <TrainingHeatmap
@@ -188,7 +182,13 @@ export default function HomeScreen({ userId }: { userId: string }) {
           onCellClick={onCellClick}
         />
 
-        {!emptyMode ? <PickupList cards={pickupCards} /> : null}
+        {!emptyMode ? (
+          <HistoryPager
+            cards={pickupCards}
+            records={stats?.records ?? []}
+            unit={weightUnit}
+          />
+        ) : null}
 
         {emptyMode ? (
           <div className="flex flex-1 flex-col justify-center py-8">{cta}</div>

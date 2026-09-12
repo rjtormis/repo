@@ -34,7 +34,7 @@ function set(
   return { id, weightKg, reps, completedAt }
 }
 
-/** Finished sessions only — active workouts are created at /workout. */
+/** Finished sessions only — active workouts live on /session/[id]. */
 export const pastSessions: Session[] = [
   {
     id: "ses-1",

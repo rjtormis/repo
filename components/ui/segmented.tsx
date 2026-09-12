@@ -40,7 +40,7 @@ export function Segmented<T extends string>({
               "min-h-10 min-w-0 flex-1 rounded-[calc(var(--radius)-2px)] px-2 text-sm transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               selected
-                ? "bg-white text-neutral-950 shadow-xs"
+                ? "bg-surface-2 text-foreground ring-1 ring-border"
                 : "text-muted-foreground hover:text-foreground",
               disabled && "opacity-50"
             )}

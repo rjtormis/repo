@@ -31,6 +31,12 @@ export function displayToKg(value: number, unit: WeightUnit): number {
   return round(value, 2)
 }
 
+/** Epley. 1-rep sets are the weight itself. */
+export function estimated1rmKg(weightKg: number, reps: number) {
+  if (reps <= 1) return weightKg
+  return weightKg * (1 + reps / 30)
+}
+
 export function formatWeight(
   kg: number | null | undefined,
   unit: WeightUnit,
