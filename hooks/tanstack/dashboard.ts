@@ -1,22 +1,9 @@
 "use client"
-import { HeatmapDatum } from "@/components/heatmap-calendar"
+
+import type { DashboardStats } from "@/types/dashboard.types"
 import { useQuery } from "@tanstack/react-query"
 
-type DashboardStats = {
-  motivation: { lead: string; accent: string; author: string | null }
-  sessions: { total: number; thisWeek: number; weeklyTarget: number }
-  streak: { unit: "day" | "week"; count: number }
-  level: { current: number; xpIntoLevel: number; xpForNextLevel: number }
-  recentSessions: {
-    id: string
-    name: string
-    exercises: string[]
-    exerciseCount: number
-    setCount: number
-    lastDoneAt: string
-  }[]
-  heatmap: HeatmapDatum[]
-}
+// ===== GET =====
 
 export const useGetDashboardStats = (date: string) => {
   return useQuery({

@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/lib/auth"
-import { headers } from "next/headers"
-import { getSpecificUserSession } from "@/actions/sessions"
+import { getSpecificSession } from "@/actions/sessions"
+import { getServerSession } from "@/lib/session"
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  })
+  const session = await getServerSession()
 
   if (!session) {
     return NextResponse.json(
@@ -21,11 +18,14 @@ export async function GET(
   }
   const { id } = await params
 
-  const workOutSession = await getSpecificUserSession({
+  const workOutSession = await getSpecificSession({
     userId: session.user.id,
     sessionId: id,
   })
-  console.log(workOutSession)
 
-  return NextResponse.json(workOutSession, { status: 200 })
+  if (!workOutSession) {
+    return NextResponse.json({ message: "Workout not found" }, { status: 404 })
+  }
+
+  return NextResponse.json(workOutSession)
 }

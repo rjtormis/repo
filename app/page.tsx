@@ -9,5 +9,5 @@ export default async function HomePage() {
   }
   // console.log(session.user.id)
 
-  return <HomeScreen userId={session.user.id} />
+  return <HomeScreen />
 }

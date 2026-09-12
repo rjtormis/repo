@@ -13,11 +13,8 @@ export function PickupList({ cards }: { cards: SessionCard[] }) {
   if (cards.length === 0) return null
 
   return (
-    <section className="mb-2">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-sm text-muted-foreground">
-          Pick up where you left off
-        </h2>
+    <div>
+      <div className="mb-3 flex justify-end">
         <span className="shrink-0 rounded-full bg-surface-2 px-2 py-1 font-mono text-[11px] text-secondary-foreground tabular-nums">
           {cards.length} {cards.length === 1 ? "workout" : "workouts"}
         </span>
@@ -28,11 +25,7 @@ export function PickupList({ cards }: { cards: SessionCard[] }) {
           return (
             <li key={card.id}>
               <Link
-                href={
-                  isSuggested
-                    ? `/workout/live-${card.id}`
-                    : `/session/${card.id}`
-                }
+                href={`/session/${card.id}`}
                 className={cn(
                   "flex min-h-11 flex-col gap-1 rounded-xl bg-surface-1 px-3.5 py-3.5 transition-colors",
                   "hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
@@ -74,6 +67,6 @@ export function PickupList({ cards }: { cards: SessionCard[] }) {
           )
         })}
       </ul>
-    </section>
+    </div>
   )
 }

@@ -1,8 +1,10 @@
 import { addDays, startOfWeekLocal, toDateKey } from "@/lib/dates"
-import { getUserSessions } from "./sessions"
+import { getSessions } from "./sessions"
 
 const weekKey = (d: Date, weekStartsOn: 0 | 1) =>
   toDateKey(startOfWeekLocal(d, weekStartsOn))
+
+// ===== GET =====
 
 export async function getUserStreak({
   userId,
@@ -13,7 +15,7 @@ export async function getUserStreak({
   date: string
   weekStartsOn: 0 | 1
 }) {
-  const sessions = await getUserSessions({ userId, position: "desc" })
+  const sessions = await getSessions({ userId, position: "desc" })
   const weeksWithWork = new Set(
     sessions
       .filter((s) => s.setCount > 0)

@@ -1,7 +1,8 @@
 import { getOrCreateDailyMotivation } from "@/actions/motivation"
-import { getUserSessions } from "@/actions/sessions"
+import { getPersonalRecords } from "@/actions/records"
+import { getSessions } from "@/actions/sessions"
 import { getUserStreak } from "@/actions/streak"
-import { HeatmapDatum } from "@/components/heatmap-calendar"
+import type { HeatmapDatum } from "@/types/dashboard.types"
 import { auth } from "@/lib/auth"
 import { headers } from "next/headers"
 import { NextRequest, NextResponse } from "next/server"
@@ -13,16 +14,19 @@ function sessionDay(iso: Date | string) {
   return new Date(iso).toLocaleDateString("en-CA") // still server TZ — see below
 }
 
-export function levelProgress(totalXp: number) {
-  let current = 1
-  while (totalXp >= XP_FOR_LEVEL(current + 1)) current++
+const XP_PER_SESSION = 40
 
-  const floor = XP_FOR_LEVEL(current)
+export function levelProgress(totalXp: number) {
+  const xp = Math.max(0, totalXp)
+  let current = 1
+  while (xp >= XP_FOR_LEVEL(current + 1)) current++
+
+  const floor = current === 1 ? 0 : XP_FOR_LEVEL(current)
   const ceiling = XP_FOR_LEVEL(current + 1)
 
   return {
     current,
-    xpIntoLevel: totalXp - floor,
+    xpIntoLevel: xp - floor,
     xpForNextLevel: ceiling - floor,
   }
 }
@@ -50,14 +54,7 @@ export async function GET(request: NextRequest) {
     date: currentDate,
   })
 
-  const xpForLevel = (level: number) => Math.floor(100 * Math.pow(level, 1.5))
-  const levelFromXp = (xp: number) => {
-    let level = 1
-    while (xp >= xpForLevel(level + 1)) level++
-    return level
-  }
-
-  const currentSessions = await getUserSessions({
+  const currentSessions = await getSessions({
     userId: userId,
     position: "asc",
   })
@@ -68,25 +65,29 @@ export async function GET(request: NextRequest) {
     weekStartsOn: session.user.weekStartsOn as 0 | 1,
   })
 
+  const records = await getPersonalRecords({ userId })
+  const loggedSessions = currentSessions.filter((s) => s.setCount > 0)
+
   const heatData = Object.values(
-    currentSessions
-      .filter((s) => s.setCount > 0)
-      .reduce<Record<string, HeatmapDatum>>((acc, s) => {
-        const date = sessionDay(s.lastDoneAt) // better: s.startedAt
-        acc[date] ??= { date, value: 0 }
-        acc[date].value = Math.min(3, acc[date].value + 1)
-        return acc
-      }, {})
+    loggedSessions.reduce<Record<string, HeatmapDatum>>((acc, s) => {
+      const date = sessionDay(s.lastDoneAt)
+      acc[date] ??= { date, value: 0 }
+      acc[date].value = Math.min(3, acc[date].value + 1)
+      return acc
+    }, {})
   )
+
+  const storedXp = Number(session.user.totalExp) || 0
+  const sessionXp = loggedSessions.length * XP_PER_SESSION
 
   const data = {
     sessions: {
-      total: currentSessions.length,
+      total: loggedSessions.length,
       thisWeeky: 3,
       weeklyTarget: 5,
     },
     streak: streak,
-    level: levelProgress(session!.user.totalExp as number),
+    level: levelProgress(Math.max(storedXp, sessionXp)),
     motivation: {
       lead: motivationMessages.lead,
       accent: motivationMessages.accent,
@@ -94,6 +95,7 @@ export async function GET(request: NextRequest) {
     },
     heatmap: heatData,
     recentSessions: currentSessions,
+    records,
   }
 
   return NextResponse.json(data, { status: 200 })
