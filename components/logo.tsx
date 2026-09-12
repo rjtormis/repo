@@ -28,17 +28,17 @@ const PATTERN: number[][] = [
 /** Light UI mark */
 const FILL_LIGHT = [
   "currentColor", // empty — muted via opacity
-  "#73CCCC",
-  "#39B3B3",
-  "#008080",
+  "#63D18F",
+  "#14874E",
+  "#1C5434",
 ] as const
 
-/** Mark on #0A192F */
-const FILL_NAVY = [
-  "#153048",
-  "#39B3B3",
-  "#73CCCC",
-  "#E0FFFF",
+/** Mark on the app dark ground (#212121) */
+const FILL_DARK = [
+  "#383838",
+  "#14874E",
+  "#63D18F",
+  "#AEE8C1",
 ] as const
 
 const VIEW_W = COLS * CELL + (COLS - 1) * GAP
@@ -54,7 +54,7 @@ export function LogoMark({
   title?: string
   onNavy?: boolean
 }) {
-  const fills = onNavy ? FILL_NAVY : FILL_LIGHT
+  const fills = onNavy ? FILL_DARK : FILL_LIGHT
 
   return (
     <svg
@@ -103,7 +103,7 @@ export function Logo({
     <div
       className={cn(
         "inline-flex items-center gap-2.5",
-        onNavy && "rounded-md bg-[#0A192F] px-3 py-2",
+        onNavy && "rounded-md bg-[#212121] px-3 py-2",
         className
       )}
     >

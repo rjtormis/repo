@@ -8,7 +8,7 @@
   "short_name": "Repo",
   "description": "Last session under each set. Offline-first. No programs.",
   "orientation": "portrait",
-  "background_color": "#0A192F",
+  "background_color": "#212121",
   "theme_color": "#212121",
   "icons": [
     {

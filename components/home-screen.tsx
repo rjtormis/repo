@@ -152,7 +152,7 @@ export default function HomeScreen() {
             {dateLabel ?? "\u00a0"}
           </p>
           <div className="mt-1 flex items-center justify-between gap-3">
-            <h1 className="min-w-0 text-[1.75rem] leading-tight font-semibold tracking-tight">
+            <h1 className="min-w-0 text-[1.75rem] leading-tight font-semibold">
               {greeting ?? "\u00a0"}
             </h1>
             <NavigationMenu />

@@ -43,14 +43,14 @@ export function StatsCard({
           {" week streak"}
         </p>
       ) : null}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1 pt-0.5">
-          <MotivationLine
-            lead={motivation?.lead}
-            accent={motivation?.accent}
-            author={motivation?.author}
-          />
-          <p className="mt-3 font-mono text-2xl leading-none font-semibold tracking-tight tabular-nums">
+      <MotivationLine
+        lead={motivation?.lead}
+        accent={motivation?.accent}
+        author={motivation?.author}
+      />
+      <div className="mt-5 flex items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="font-mono text-2xl leading-none font-semibold tabular-nums">
             {sessionsReady ? sessions : "\u00a0"}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">

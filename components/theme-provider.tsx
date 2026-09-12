@@ -15,6 +15,7 @@ function ThemeProvider({
       disableTransitionOnChange
       {...props}
     >
+      <ThemeColorSync />
       <ThemeHotkey />
       {children}
     </NextThemesProvider>
@@ -32,6 +33,33 @@ function isTypingTarget(target: EventTarget | null) {
     target.tagName === "TEXTAREA" ||
     target.tagName === "SELECT"
   )
+}
+
+const THEME_COLORS = {
+  dark: "#212121",
+  light: "#ffffff",
+} as const
+
+function ThemeColorSync() {
+  const { resolvedTheme } = useTheme()
+
+  React.useEffect(() => {
+    const color =
+      resolvedTheme === "light" ? THEME_COLORS.light : THEME_COLORS.dark
+    const metas = document.querySelectorAll('meta[name="theme-color"]')
+    if (metas.length === 0) {
+      const meta = document.createElement("meta")
+      meta.name = "theme-color"
+      meta.content = color
+      document.head.appendChild(meta)
+      return
+    }
+    metas.forEach((meta) => {
+      meta.setAttribute("content", color)
+    })
+  }, [resolvedTheme])
+
+  return null
 }
 
 function ThemeHotkey() {
