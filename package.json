@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "email:dev": "email dev --port 3001",
-    "build": "next build --webpack",
+    "build": "npx prisma generate && next build --webpack",
     "start": "next start",
     "ngrok": "ngrok http 3000",
     "lint": "eslint",
