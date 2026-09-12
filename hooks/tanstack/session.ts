@@ -3,9 +3,13 @@
 import {
   addExercisesToSession,
   addWorkoutSet,
+  completeWorkoutSet,
   createSession,
   deleteSpecificSession,
+  deleteWorkoutExercise,
+  deleteWorkoutSet,
   updateSpecificSessionName,
+  updateWorkingWeight,
   updateWorkoutSessionStart,
   updateWorkoutSet,
 } from "@/actions/sessions"
@@ -72,7 +76,8 @@ export const useAddExercisesToSession = (id: string) => {
       exerciseIds: string[]
     }): ReturnType<typeof addExercisesToSession> =>
       addExercisesToSession({ sessionId: id, exerciseIds }),
-    onSuccess: () => {
+    onSuccess: (next) => {
+      if (next) qc.setQueryData(["sessions", id], next)
       qc.invalidateQueries({ queryKey: ["sessions", id] })
       qc.invalidateQueries({ queryKey: ["dashboard"] })
     },
@@ -86,11 +91,20 @@ export const useAddWorkoutSet = (sessionId: string) => {
       workoutExerciseId,
       weightKg,
       reps,
+      completed,
     }: {
       workoutExerciseId: string
       weightKg: number | null
       reps: number
-    }) => addWorkoutSet({ sessionId, workoutExerciseId, weightKg, reps }),
+      completed?: boolean
+    }) =>
+      addWorkoutSet({
+        sessionId,
+        workoutExerciseId,
+        weightKg,
+        reps,
+        completed,
+      }),
     onSuccess: (next) => {
       if (next) qc.setQueryData(["sessions", sessionId], next)
       qc.invalidateQueries({ queryKey: ["dashboard"] })
@@ -126,26 +140,38 @@ export const useUpdateWorkoutStartedAt = (id: string) => {
       status: "not_started" | "finished" | "in_progress"
     ): ReturnType<typeof updateWorkoutSessionStart> =>
       updateWorkoutSessionStart({ sessionId: id, status: status }),
-    onSuccess: (updated) => {
-      qc.setQueryData(
-        ["sessions", id],
-        (old: WorkoutSessionDetail | undefined) =>
-          old && updated
-            ? {
-                ...old,
-                startedAt: updated.startedAt
-                  ? new Date(updated.startedAt).toISOString()
-                  : old.startedAt,
-                endedAt: updated.endedAt
-                  ? new Date(updated.endedAt).toISOString()
-                  : updated.endedAt === null
-                    ? null
-                    : old.endedAt,
-              }
-            : old
-      )
+    onSuccess: (next) => {
+      if (next) qc.setQueryData(["sessions", id], next)
       qc.invalidateQueries({ queryKey: ["sessions", id] })
       qc.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+  })
+}
+
+export const useCompleteWorkoutSet = (sessionId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ setId }: { setId: string }) =>
+      completeWorkoutSet({ sessionId, setId }),
+    onSuccess: (next) => {
+      if (next) qc.setQueryData(["sessions", sessionId], next)
+      qc.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+  })
+}
+
+export const useUpdateWorkingWeight = (sessionId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      workoutExerciseId,
+      weightKg,
+    }: {
+      workoutExerciseId: string
+      weightKg: number | null
+    }) => updateWorkingWeight({ sessionId, workoutExerciseId, weightKg }),
+    onSuccess: (next) => {
+      if (next) qc.setQueryData(["sessions", sessionId], next)
     },
   })
 }
@@ -170,6 +196,30 @@ export const useRenameSession = (id: string) => {
 }
 
 // ===== DELETE =====
+
+export const useDeleteWorkoutExercise = (sessionId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ workoutExerciseId }: { workoutExerciseId: string }) =>
+      deleteWorkoutExercise({ sessionId, workoutExerciseId }),
+    onSuccess: (next) => {
+      if (next) qc.setQueryData(["sessions", sessionId], next)
+      qc.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+  })
+}
+
+export const useDeleteWorkoutSet = (sessionId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ setId }: { setId: string }) =>
+      deleteWorkoutSet({ sessionId, setId }),
+    onSuccess: (next) => {
+      if (next) qc.setQueryData(["sessions", sessionId], next)
+      qc.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+  })
+}
 
 export const useDeleteSpecificSession = (id: string) => {
   const qc = useQueryClient()

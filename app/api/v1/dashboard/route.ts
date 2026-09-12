@@ -1,6 +1,6 @@
 import { getOrCreateDailyMotivation } from "@/actions/motivation"
 import { getPersonalRecords } from "@/actions/records"
-import { getSessions } from "@/actions/sessions"
+import { getActiveSession, getSessions } from "@/actions/sessions"
 import { getUserStreak } from "@/actions/streak"
 import { Unauthorized } from "@/lib/api/errors"
 import { withErrorHandler } from "@/lib/api/handler"
@@ -61,6 +61,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
   })
 
   const records = await getPersonalRecords({ userId })
+  const activeSession = await getActiveSession(userId)
   const loggedSessions = currentSessions.filter((s) => s.setCount > 0)
 
   const heatData = Object.values(
@@ -91,6 +92,7 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
     heatmap: heatData,
     recentSessions: currentSessions,
     records,
+    activeSession,
   }
 
   return NextResponse.json(data, { status: 200 })

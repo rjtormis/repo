@@ -53,6 +53,116 @@ async function loadSession({
   })
 }
 
+async function lastCompletedSetsByExercise({
+  userId,
+  exerciseIds,
+  before,
+  excludeSessionId,
+}: {
+  userId: string
+  exerciseIds: string[]
+  before: Date
+  excludeSessionId: string
+}) {
+  if (exerciseIds.length === 0) {
+    return new Map<
+      string,
+      {
+        startedAt: Date | null
+        workoutSets: { weight: unknown; reps: number }[]
+      }
+    >()
+  }
+
+  const priors = await prisma.workoutExercise.findMany({
+    where: {
+      exerciseId: { in: exerciseIds },
+      workoutSession: {
+        userId,
+        id: { not: excludeSessionId },
+        startedAt: { lt: before },
+      },
+      workoutSets: { some: { completedAt: { not: null } } },
+    },
+    orderBy: { workoutSession: { startedAt: "desc" } },
+    select: {
+      exerciseId: true,
+      workoutSession: { select: { startedAt: true } },
+      workoutSets: {
+        where: { completedAt: { not: null } },
+        orderBy: { position: "asc" },
+        select: { weight: true, reps: true },
+      },
+    },
+  })
+
+  const firstByExercise = new Map<
+    string,
+    {
+      startedAt: Date | null
+      workoutSets: { weight: unknown; reps: number }[]
+    }
+  >()
+  for (const row of priors) {
+    if (firstByExercise.has(row.exerciseId)) continue
+    firstByExercise.set(row.exerciseId, {
+      startedAt: row.workoutSession.startedAt,
+      workoutSets: row.workoutSets,
+    })
+  }
+  return firstByExercise
+}
+
+function pendingSetSeeds(previous: { weight: unknown; reps: number }[]) {
+  if (previous.length === 0) {
+    return [0, 1, 2].map((position) => ({
+      position,
+      weight: null as number | null,
+      reps: 8,
+      completedAt: null,
+    }))
+  }
+  return previous.map((set, position) => ({
+    position,
+    weight: toKg(set.weight),
+    reps: set.reps,
+    completedAt: null,
+  }))
+}
+
+async function seedPendingSets({
+  userId,
+  sessionId,
+  startedAt,
+  rows,
+}: {
+  userId: string
+  sessionId: string
+  startedAt: Date
+  rows: { id: string; exerciseId: string; setCount: number }[]
+}) {
+  const empty = rows.filter((row) => row.setCount === 0)
+  if (empty.length === 0) return
+
+  const priors = await lastCompletedSetsByExercise({
+    userId,
+    exerciseIds: empty.map((row) => row.exerciseId),
+    before: startedAt,
+    excludeSessionId: sessionId,
+  })
+
+  await prisma.workoutSet.createMany({
+    data: empty.flatMap((row) =>
+      pendingSetSeeds(priors.get(row.exerciseId)?.workoutSets ?? []).map(
+        (set) => ({
+          ...set,
+          workoutExerciseId: row.id,
+        })
+      )
+    ),
+  })
+}
+
 async function attachReview(
   session: NonNullable<Awaited<ReturnType<typeof loadSession>>>,
   userId: string
@@ -64,31 +174,24 @@ async function attachReview(
     string,
     { weightKg: number; achievedAt: string } | null
   > = Object.fromEntries(exerciseIds.map((id) => [id, null]))
+  const previousSetsByExercise: Record<
+    string,
+    { weightKg: number | null; reps: number }[]
+  > = Object.fromEntries(exerciseIds.map((id) => [id, []]))
 
   if (exerciseIds.length > 0 && session.startedAt !== null) {
-    const priors = await prisma.workoutExercise.findMany({
-      where: {
-        exerciseId: { in: exerciseIds },
-        workoutSession: {
-          userId,
-          id: { not: session.id },
-          startedAt: { lt: session.startedAt },
-        },
-        workoutSets: { some: { completedAt: { not: null } } },
-      },
-      orderBy: { workoutSession: { startedAt: "desc" } },
-      select: {
-        exerciseId: true,
-        workoutSession: { select: { startedAt: true } },
-        workoutSets: {
-          where: { completedAt: { not: null } },
-          select: { weight: true, reps: true },
-        },
-      },
+    const priors = await lastCompletedSetsByExercise({
+      userId,
+      exerciseIds,
+      before: session.startedAt,
+      excludeSessionId: session.id,
     })
 
-    for (const row of priors) {
-      if (previousByExercise[row.exerciseId]) continue
+    for (const [exerciseId, row] of priors) {
+      previousSetsByExercise[exerciseId] = row.workoutSets.map((set) => ({
+        weightKg: toKg(set.weight),
+        reps: set.reps,
+      }))
       let best: { weightKg: number; reps: number } | null = null
       for (const set of row.workoutSets) {
         const kg = toKg(set.weight)
@@ -102,11 +205,9 @@ async function attachReview(
         }
       }
       if (!best) continue
-      previousByExercise[row.exerciseId] = {
+      previousByExercise[exerciseId] = {
         weightKg: best.weightKg,
-        achievedAt: row.workoutSession.startedAt
-          ? row.workoutSession.startedAt.toISOString()
-          : "",
+        achievedAt: row.startedAt ? row.startedAt.toISOString() : "",
       }
     }
   }
@@ -141,7 +242,7 @@ async function attachReview(
     ),
   }))
 
-  return { ...session, previousByExercise, volumeTrend }
+  return { ...session, previousByExercise, previousSetsByExercise, volumeTrend }
 }
 
 // ===== GET =====
@@ -169,6 +270,7 @@ export const getSessions = async ({
           workoutSets: {
             select: {
               id: true,
+              completedAt: true,
             },
           },
         },
@@ -182,7 +284,9 @@ export const getSessions = async ({
     exercises: session.exercises.map((row) => row.exercise.name),
     exerciseCount: session.exercises.length,
     setCount: session.exercises.reduce(
-      (sum, row) => sum + row.workoutSets.length,
+      (sum, row) =>
+        sum +
+        row.workoutSets.filter((set) => set.completedAt != null).length,
       0
     ),
     lastDoneAt: session.startedAt,
@@ -203,13 +307,39 @@ export const getSpecificSession = async ({
 
 // ===== CREATE =====
 
+export const getActiveSession = async (userId: string) => {
+  const row = await prisma.workoutSession.findFirst({
+    where: { userId, startedAt: { not: null }, endedAt: null },
+    orderBy: { startedAt: "desc" },
+    select: { id: true, name: true, startedAt: true },
+  })
+  if (!row?.startedAt) return null
+  return {
+    id: row.id,
+    name: row.name,
+    startedAt: row.startedAt.toISOString(),
+  }
+}
+
 export const createSession = async () => {
   const session = await getServerSession()
   if (!session) throw new Error("Sign in to start a workout")
-  return await prisma.workoutSession.create({
+
+  const active = await prisma.workoutSession.findFirst({
+    where: {
+      userId: session.user.id,
+      startedAt: { not: null },
+      endedAt: null,
+    },
+    orderBy: { startedAt: "desc" },
+  })
+  if (active) return active
+
+  return prisma.workoutSession.create({
     data: {
       name: "New workout",
       userId: session.user.id,
+      startedAt: new Date(),
     },
   })
 }
@@ -238,14 +368,37 @@ export const addExercisesToSession = async ({
     throw new Error("Workout session does not exists.")
   }
 
-  const start = workoutSession.exercises.length
-  await prisma.workoutExercise.createMany({
-    data: ids.map((exerciseId, index) => ({
-      workoutSessionId: sessionId,
-      exerciseId,
-      position: start + index,
-    })),
-  })
+  const start =
+    workoutSession.exercises.reduce(
+      (max, row) => Math.max(max, row.position),
+      -1
+    ) + 1
+  const created = await prisma.$transaction(
+    ids.map((exerciseId, index) =>
+      prisma.workoutExercise.create({
+        data: {
+          workoutSessionId: sessionId,
+          exerciseId,
+          position: start + index,
+        },
+        select: { id: true, exerciseId: true },
+      })
+    )
+  )
+
+  const startedAt = workoutSession.startedAt
+  if (startedAt != null && workoutSession.endedAt == null) {
+    await seedPendingSets({
+      userId: session.user.id,
+      sessionId,
+      startedAt: new Date(startedAt),
+      rows: created.map((row) => ({
+        id: row.id,
+        exerciseId: row.exerciseId,
+        setCount: 0,
+      })),
+    })
+  }
 
   return getSpecificSession({
     userId: session.user.id,
@@ -258,11 +411,13 @@ export const addWorkoutSet = async ({
   workoutExerciseId,
   weightKg,
   reps,
+  completed = true,
 }: {
   sessionId: string
   workoutExerciseId: string
   weightKg: number | null
   reps: number
+  completed?: boolean
 }) => {
   const session = await getServerSession()
   if (!session) throw new Error("Sign in to edit a set")
@@ -294,7 +449,7 @@ export const addWorkoutSet = async ({
       position,
       weight: weightKg,
       reps: Math.round(reps),
-      completedAt: new Date(),
+      completedAt: completed ? new Date() : null,
     },
   })
 
@@ -349,6 +504,78 @@ export const updateWorkoutSet = async ({
   })
 }
 
+export const completeWorkoutSet = async ({
+  sessionId,
+  setId,
+}: {
+  sessionId: string
+  setId: string
+}) => {
+  const session = await getServerSession()
+  if (!session) throw new Error("Sign in to edit a set")
+
+  const owned = await prisma.workoutSet.findFirst({
+    where: {
+      id: setId,
+      workoutExercise: {
+        workoutSessionId: sessionId,
+        workoutSession: { userId: session.user.id },
+      },
+    },
+    select: { id: true, completedAt: true },
+  })
+  if (!owned) throw new Error("Set not found.")
+  if (owned.completedAt) {
+    return getSpecificSession({
+      userId: session.user.id,
+      sessionId,
+    })
+  }
+
+  await prisma.workoutSet.update({
+    where: { id: setId },
+    data: { completedAt: new Date() },
+  })
+
+  return getSpecificSession({
+    userId: session.user.id,
+    sessionId,
+  })
+}
+
+export const updateWorkingWeight = async ({
+  sessionId,
+  workoutExerciseId,
+  weightKg,
+}: {
+  sessionId: string
+  workoutExerciseId: string
+  weightKg: number | null
+}) => {
+  const session = await getServerSession()
+  if (!session) throw new Error("Sign in to edit a set")
+
+  const row = await prisma.workoutExercise.findFirst({
+    where: {
+      id: workoutExerciseId,
+      workoutSessionId: sessionId,
+      workoutSession: { userId: session.user.id },
+    },
+    select: { id: true },
+  })
+  if (!row) throw new Error("Exercise not found.")
+
+  await prisma.workoutSet.updateMany({
+    where: { workoutExerciseId: row.id, completedAt: null },
+    data: { weight: weightKg },
+  })
+
+  return getSpecificSession({
+    userId: session.user.id,
+    sessionId,
+  })
+}
+
 export const updateWorkoutSessionStart = async ({
   sessionId,
   status,
@@ -369,22 +596,41 @@ export const updateWorkoutSessionStart = async ({
     throw new Error("Workout session does not exists.")
   }
 
-  switch (status) {
-    case "in_progress":
-      return await prisma.workoutSession.update({
+  if (status === "in_progress") {
+    await prisma.$transaction([
+      prisma.workoutSet.deleteMany({
+        where: {
+          completedAt: null,
+          workoutExercise: { workoutSessionId: sessionId },
+        },
+      }),
+      prisma.workoutSession.update({
         where: { id: sessionId },
         data: { endedAt: new Date() },
-      })
-    case "not_started":
-      return await prisma.workoutSession.update({
-        where: {
-          id: sessionId,
-        },
-        data: {
-          startedAt: new Date(),
-        },
-      })
+      }),
+    ])
+  } else if (status === "not_started") {
+    const startedAt = new Date()
+    await prisma.workoutSession.update({
+      where: { id: sessionId },
+      data: { startedAt },
+    })
+    await seedPendingSets({
+      userId: session.user.id,
+      sessionId,
+      startedAt,
+      rows: workoutSession.exercises.map((row) => ({
+        id: row.id,
+        exerciseId: row.exercise.id,
+        setCount: row.workoutSets.length,
+      })),
+    })
   }
+
+  return getSpecificSession({
+    userId: session.user.id,
+    sessionId,
+  })
 }
 
 export const updateSpecificSessionName = async ({
@@ -442,5 +688,63 @@ export const deleteSpecificSession = async ({
     where: {
       id: sessionId,
     },
+  })
+}
+
+export const deleteWorkoutExercise = async ({
+  sessionId,
+  workoutExerciseId,
+}: {
+  sessionId: string
+  workoutExerciseId: string
+}) => {
+  const session = await getServerSession()
+  if (!session) throw new Error("Sign in to edit a workout")
+
+  const row = await prisma.workoutExercise.findFirst({
+    where: {
+      id: workoutExerciseId,
+      workoutSessionId: sessionId,
+      workoutSession: { userId: session.user.id },
+    },
+    select: { id: true },
+  })
+  if (!row) throw new Error("Exercise not found.")
+
+  await prisma.workoutExercise.delete({ where: { id: row.id } })
+
+  return getSpecificSession({
+    userId: session.user.id,
+    sessionId,
+  })
+}
+
+export const deleteWorkoutSet = async ({
+  sessionId,
+  setId,
+}: {
+  sessionId: string
+  setId: string
+}) => {
+  const session = await getServerSession()
+  if (!session) throw new Error("Sign in to edit a set")
+
+  const owned = await prisma.workoutSet.findFirst({
+    where: {
+      id: setId,
+      workoutExercise: {
+        workoutSessionId: sessionId,
+        workoutSession: { userId: session.user.id },
+      },
+    },
+    select: { id: true },
+  })
+  if (!owned) throw new Error("Set not found.")
+
+  await prisma.workoutSet.delete({ where: { id: owned.id } })
+
+  return getSpecificSession({
+    userId: session.user.id,
+    sessionId,
   })
 }

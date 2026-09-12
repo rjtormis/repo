@@ -51,6 +51,12 @@ export type DashboardRecord = {
   } | null
 }
 
+export type DashboardActiveSession = {
+  id: string
+  name: string
+  startedAt: string
+}
+
 export type DashboardStats = {
   motivation: DashboardMotivation
   sessions: DashboardSessions
@@ -59,4 +65,5 @@ export type DashboardStats = {
   recentSessions: DashboardRecentSession[]
   heatmap: HeatmapDatum[]
   records: DashboardRecord[]
+  activeSession: DashboardActiveSession | null
 }

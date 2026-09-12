@@ -13,13 +13,13 @@ import { AddExerciseDrawer } from "@/components/session/add-exercise-drawer"
 import { EmptyExercises } from "@/components/session/empty-exercises"
 import { ExerciseCard } from "@/components/session/exercise-card"
 import { SessionHeader } from "@/components/session/header"
+import { SessionLiveLogger } from "@/components/session/live-logger"
 import {
   formatHeaderDate,
   sessionSetCount,
   sessionStatusOf,
   sessionVolume,
 } from "@/components/session/lib"
-import type { SessionStatus } from "@/types/session.types"
 import { VolumeTrend } from "@/components/session/volume-trend"
 import { SessionStats } from "@/components/session/stats-row"
 import {
@@ -52,14 +52,10 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
   const [renameOpen, setRenameOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
-  const [sessionStatus, setSessionStatus] = useState<SessionStatus>(
-    "not_started"
-  )
 
   useEffect(() => {
     if (!data) return
     setName(data.name)
-    setSessionStatus(sessionStatusOf(data))
   }, [data])
 
   if (isPending) {
@@ -89,11 +85,6 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
     router.push("/dashboard")
   }
 
-  const handleStartFinishWorkout = async () => {
-    const next = await updateSessionStart(sessionStatus)
-    setSessionStatus(sessionStatusOf(next))
-  }
-
   if (isError || !data) {
     return (
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -116,8 +107,17 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
     )
   }
 
+  const sessionStatus = sessionStatusOf(data)
+  if (sessionStatus === "in_progress") {
+    return <SessionLiveLogger session={data} />
+  }
+
   const displayName = name || data.name
-  const canLogSets = sessionStatus === "in_progress" || editing
+  const canLogSets = editing
+
+  const handleStartFinishWorkout = async () => {
+    await updateSessionStart(sessionStatus)
+  }
 
   function openRename() {
     setRenameDraft(displayName)
@@ -193,7 +193,7 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
         )}
       </div>
 
-      {data.exercises.length > 0 ? (
+      {sessionStatus === "not_started" ? (
         <div className="sticky bottom-0 z-10 -mx-4 border-t border-border bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">
           <Button
             size="lg"
@@ -201,13 +201,7 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
             onClick={handleStartFinishWorkout}
             disabled={sessionStartPending}
           >
-            {sessionStatus === "finished"
-              ? "Duplicate Workout"
-              : sessionStatus === "in_progress"
-                ? "Finish Workout"
-                : sessionStatus === "not_started"
-                  ? "Start Workout"
-                  : null}
+            Start Workout
           </Button>
         </div>
       ) : null}

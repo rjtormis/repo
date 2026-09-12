@@ -94,31 +94,19 @@ async function getActiveWorkout(
   exerciseId: string
 ): Promise<ActiveWorkout | null> {
   const latest = await prisma.workoutSession.findFirst({
-    where: { userId },
-    orderBy: { updatedAt: "desc" },
+    where: { userId, startedAt: { not: null }, endedAt: null },
+    orderBy: { startedAt: "desc" },
     select: {
       id: true,
       name: true,
-      startedAt: true,
-      updatedAt: true,
       exercises: {
         select: {
           exerciseId: true,
-          workoutSets: { select: { completedAt: true } },
         },
       },
     },
   })
   if (!latest) return null
-
-  const hasCompleted = latest.exercises.some((row) =>
-    row.workoutSets.some((set) => set.completedAt)
-  )
-  const cutoff = Date.now() - 18 * 60 * 60 * 1000
-  const fresh =
-    latest.updatedAt.getTime() >= cutoff ||
-    (latest.startedAt?.getTime() ?? 0) >= cutoff
-  if (hasCompleted && !fresh) return null
 
   return {
     id: latest.id,
