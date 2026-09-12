@@ -1,31 +1,24 @@
-import { NextRequest, NextResponse } from "next/server"
 import { getSpecificSession } from "@/actions/sessions"
+import { NotFound, Unauthorized } from "@/lib/api/errors"
+import { withErrorHandler } from "@/lib/api/handler"
 import { getServerSession } from "@/lib/session"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const session = await getServerSession()
+export const GET = withErrorHandler(
+  async (
+    _request: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
+    const session = await getServerSession()
+    if (!session) throw Unauthorized()
 
-  if (!session) {
-    return NextResponse.json(
-      {
-        message: "Please sign in to create workout",
-      },
-      { status: 400 }
-    )
+    const { id } = await params
+    const workOutSession = await getSpecificSession({
+      userId: session.user.id,
+      sessionId: id,
+    })
+    if (!workOutSession) throw NotFound("Workout not found")
+
+    return NextResponse.json(workOutSession)
   }
-  const { id } = await params
-
-  const workOutSession = await getSpecificSession({
-    userId: session.user.id,
-    sessionId: id,
-  })
-
-  if (!workOutSession) {
-    return NextResponse.json({ message: "Workout not found" }, { status: 404 })
-  }
-
-  return NextResponse.json(workOutSession)
-}
+)

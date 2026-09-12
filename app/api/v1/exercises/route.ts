@@ -1,18 +1,13 @@
 import { getAllExercises } from "@/actions/exercises"
+import { Unauthorized } from "@/lib/api/errors"
+import { withErrorHandler } from "@/lib/api/handler"
 import { getServerSession } from "@/lib/session"
 import { NextRequest, NextResponse } from "next/server"
 
-export async function GET(request: NextRequest) {
+export const GET = withErrorHandler(async (request: NextRequest) => {
   const session = await getServerSession()
+  if (!session) throw Unauthorized()
 
-  if (!session) {
-    return NextResponse.json(
-      {
-        message: "Please sign in to create workout",
-      },
-      { status: 400 }
-    )
-  }
   const searchParams = request.nextUrl.searchParams
   const query = searchParams.get("query")
   const cursor = searchParams.get("cursor")
@@ -27,4 +22,4 @@ export async function GET(request: NextRequest) {
   })
 
   return NextResponse.json(exercises, { status: 200 })
-}
+})
