@@ -143,16 +143,16 @@ export default function HomeScreen() {
       <div
         className={cn(
           "flex min-w-0 flex-col overflow-x-hidden",
-          !emptyMode && "pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))]"
+          !emptyMode && "pb-[calc(7.5rem+env(safe-area-inset-bottom,0px))]"
         )}
         style={PAGE_PAD_STYLE}
       >
-        <header className="mb-5">
+        <header className="mb-4">
           <p className="text-[11px] font-medium tracking-[0.14em] text-muted-foreground uppercase">
             {dateLabel ?? "\u00a0"}
           </p>
           <div className="mt-1 flex items-center justify-between gap-3">
-            <h1 className="min-w-0 text-[1.75rem] leading-tight font-semibold">
+            <h1 className="min-w-0 text-xl leading-tight font-semibold">
               {greeting ?? "\u00a0"}
             </h1>
             <NavigationMenu />

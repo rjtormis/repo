@@ -35,9 +35,9 @@ export function StatsCard({
   xpToNext: number
 }) {
   return (
-    <section className="mb-6 rounded-3xl bg-surface-1 p-5">
+    <section className="mb-4 rounded-3xl bg-surface-1 p-4">
       {streak > 0 ? (
-        <p className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-bg-success px-2.5 py-1 text-[12px] font-medium text-text-success">
+        <p className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-bg-success px-2.5 py-1 text-[12px] font-medium text-text-success">
           <IconFlame className="size-3.5" stroke={1.75} aria-hidden />
           <span className="font-mono tabular-nums">{streak}</span>
           {" week streak"}
@@ -48,9 +48,9 @@ export function StatsCard({
         accent={motivation?.accent}
         author={motivation?.author}
       />
-      <div className="mt-5 flex items-end justify-between gap-4">
+      <div className="mt-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-mono text-2xl leading-none font-semibold tabular-nums">
+          <p className="font-mono text-xl leading-none font-semibold tabular-nums">
             {sessionsReady ? sessions : "\u00a0"}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -59,7 +59,7 @@ export function StatsCard({
         </div>
         <WeekRing done={weekDone} goal={weekGoal} />
       </div>
-      <div className="mt-5 flex items-center gap-3 border-t border-border pt-4">
+      <div className="mt-4 flex items-center gap-3 border-t border-border pt-3">
         <p className="shrink-0 font-mono text-sm tabular-nums">
           Lv {level?.current}
         </p>

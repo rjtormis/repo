@@ -19,7 +19,7 @@ export function HistoryPager({
   const [page, setPage] = useState<"workouts" | "records">("workouts")
 
   return (
-    <section className="mb-2">
+    <section className="mb-4">
       <Segmented
         aria-label="Workouts or records"
         value={page}

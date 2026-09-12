@@ -34,7 +34,7 @@ export function TrainingHeatmap({
   return (
     <section
       aria-label={`Training last ${monthsShown} months`}
-      className="mb-6 min-w-0"
+      className="mb-4 min-w-0"
       dir="ltr"
     >
       <div

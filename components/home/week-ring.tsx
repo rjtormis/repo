@@ -1,6 +1,6 @@
 export function WeekRing({ done, goal }: { done: number; goal: number }) {
-  const size = 108
-  const stroke = 7
+  const size = 80
+  const stroke = 6
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
   const pct = goal <= 0 ? 0 : Math.min(1, done / goal)
@@ -38,13 +38,13 @@ export function WeekRing({ done, goal }: { done: number; goal: number }) {
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-mono text-[1.65rem] leading-none font-semibold tracking-tight tabular-nums">
+          <span className="font-mono text-xl leading-none font-semibold tabular-nums">
             {done}
-            <span className="text-base font-medium text-muted-foreground">
+            <span className="text-sm font-medium text-muted-foreground">
               /{goal}
             </span>
           </span>
-          <span className="mt-1 text-[11px] leading-none text-muted-foreground">
+          <span className="mt-0.5 text-[10px] leading-none text-muted-foreground">
             this week
           </span>
         </div>
