@@ -4,6 +4,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { IconPlayerPlay } from "@tabler/icons-react"
+import { ExerciseDetailSkeleton } from "@/components/exercise/skeleton/exercise-detail-skeleton"
 import { MuscleGroupIcon } from "@/components/session/muscle-group"
 import { SubpageHeader } from "@/components/subpage-header"
 import { Button } from "@/components/ui/button"
@@ -31,14 +32,7 @@ export function ExerciseDetail({ exerciseId }: { exerciseId: string }) {
   const addToWorkout = useAddExerciseToWorkout()
 
   if (isPending) {
-    return (
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <SubpageHeader title="…" backHref="/dashboard/exercises" />
-        <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-          Loading…
-        </p>
-      </div>
-    )
+    return <ExerciseDetailSkeleton />
   }
 
   if (isError || !data) {

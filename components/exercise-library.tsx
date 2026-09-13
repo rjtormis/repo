@@ -12,6 +12,7 @@ import { useGetExercises } from "@/hooks/tanstack/exrcise"
 import type { CatalogExercise } from "@/types/exercise.types"
 import { MUSCLE_GROUP_FILTERS, muscleGroupLabel } from "@/lib/muscle-groups"
 import { cn } from "@/lib/utils"
+import { ExerciseListSkeleton } from "@/components/exercise/skeleton/exercise-list-skeleton"
 import { Input } from "./ui/input"
 
 const LIST_ID = "exercise-library-list"
@@ -99,9 +100,7 @@ export function ExerciseLibrary() {
         )}
       >
         {isPending && empty ? (
-          <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-            Loading…
-          </p>
+          <ExerciseListSkeleton stickyLabels />
         ) : empty ? (
           <p className="px-2 py-6 text-center text-sm text-muted-foreground">
             No matches

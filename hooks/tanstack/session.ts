@@ -14,10 +14,22 @@ import {
   updateWorkoutSessionStart,
   updateWorkoutSet,
 } from "@/actions/sessions"
+import type { SessionCard } from "@/components/home/types"
 import type { WorkoutSessionDetail } from "@/types/session.types"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 // ===== GET =====
+
+export const useGetSessions = () => {
+  return useQuery({
+    queryKey: ["sessions"],
+    queryFn: async (): Promise<SessionCard[]> => {
+      const res = await fetch("/api/v1/sessions")
+      if (!res.ok) throw new Error("Failed to fetch sessions.")
+      return res.json()
+    },
+  })
+}
 
 export const useGetSpecificSession = (id: string) => {
   return useQuery({

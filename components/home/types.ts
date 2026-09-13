@@ -5,6 +5,7 @@ export type SessionCard = {
   exerciseCount: number
   setCount: number
   lastDoneAt: string | Date | null
+  endedAt?: string | Date | null
 }
 
 export type ActiveSession = {

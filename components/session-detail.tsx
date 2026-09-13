@@ -18,6 +18,7 @@ import { AddExerciseDrawer } from "@/components/session/drawers/add-exercise-dra
 import { EmptyExercises } from "@/components/session/empty-exercises"
 import { ExerciseCard } from "@/components/session/exercise-card"
 import { SessionHeader } from "@/components/session/header"
+import { SessionDetailSkeleton } from "@/components/session/skeleton/session-detail-skeleton"
 import { SessionLiveLogger } from "@/components/session/live-logger"
 import {
   formatHeaderDate,
@@ -120,18 +121,7 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
   }, [data])
 
   if (isPending) {
-    return (
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <SessionHeader
-          name="…"
-          exercises={0}
-          dateLabel="…"
-          onRename={() => {}}
-          onDelete={() => {}}
-          onEdit={() => {}}
-        />
-      </div>
-    )
+    return <SessionDetailSkeleton />
   }
 
   const handleRenameSession = async () => {

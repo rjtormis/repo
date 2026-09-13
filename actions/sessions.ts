@@ -323,7 +323,8 @@ export const getSessions = async ({
         row.workoutSets.filter((set) => set.completedAt != null).length,
       0
     ),
-    lastDoneAt: session.startedAt,
+    lastDoneAt: session.endedAt ?? session.startedAt,
+    endedAt: session.endedAt,
   }))
 }
 

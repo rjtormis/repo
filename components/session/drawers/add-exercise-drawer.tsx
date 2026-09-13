@@ -24,6 +24,7 @@ import { useGetExercises } from "@/hooks/tanstack/exrcise"
 import type { CatalogExercise } from "@/types/exercise.types"
 import { cn } from "@/lib/utils"
 import { Spinner } from "@/components/ui/spinner"
+import { ExerciseListSkeleton } from "@/components/exercise/skeleton/exercise-list-skeleton"
 import { Input } from "@/components/ui/input"
 
 const LIST_ID = "add-exercise-list"
@@ -227,9 +228,7 @@ export function AddExerciseDrawer({
           )}
         >
           {isPending && empty ? (
-            <p className="px-2 py-6 text-center text-sm text-muted-foreground">
-              Loading…
-            </p>
+            <ExerciseListSkeleton picker />
           ) : empty ? (
             <p className="px-2 py-6 text-center text-sm text-muted-foreground">
               No matches
