@@ -16,7 +16,21 @@ export function canShareFiles() {
   }
 }
 
+async function waitForImages(node: HTMLElement) {
+  const images = Array.from(node.querySelectorAll("img"))
+  await Promise.all(
+    images.map((image) => {
+      if (image.complete) return Promise.resolve()
+      return new Promise<void>((resolve) => {
+        image.addEventListener("load", () => resolve(), { once: true })
+        image.addEventListener("error", () => resolve(), { once: true })
+      })
+    })
+  )
+}
+
 export async function captureSharePng(node: HTMLElement) {
+  await waitForImages(node)
   return domToPng(node, {
     scale: 3,
     width: SHARE_STORY_WIDTH,
@@ -36,6 +50,7 @@ export async function sharePngFile({
   text: string
   url: string
 }) {
+  await waitForImages(node)
   const blob = await domToBlob(node, {
     scale: 3,
     width: SHARE_STORY_WIDTH,

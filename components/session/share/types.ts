@@ -9,6 +9,22 @@ export const SHARE_STORY_SAFE_Y = (250 / 1920) * SHARE_STORY_HEIGHT
 export const SHARE_VARIANTS = ["session", "pr"] as const
 export type ShareVariant = (typeof SHARE_VARIANTS)[number]
 
+/** Photo stories — four different compositions, not one overlay in four places. */
+export const SHARE_PHOTO_LAYOUTS = [
+  "dock",
+  "split",
+  "stamp",
+  "billboard",
+] as const
+export type SharePhotoLayout = (typeof SHARE_PHOTO_LAYOUTS)[number]
+
+export const SHARE_PHOTO_LAYOUT_LABEL: Record<SharePhotoLayout, string> = {
+  dock: "Dock",
+  split: "Split",
+  stamp: "Stamp",
+  billboard: "Billboard",
+}
+
 /** Sparse heatmaps read as “barely trains.” Hero volume until this many sessions. */
 export const SHARE_HEATMAP_MIN_SESSIONS = 10
 

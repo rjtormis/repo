@@ -9,6 +9,7 @@ export const useGetDashboardStats = (date: string) => {
   return useQuery({
     queryKey: ["dashboard", date],
     enabled: Boolean(date),
+    staleTime: 60_000,
     queryFn: async (): Promise<DashboardStats> => {
       const res = await fetch(`/api/v1/dashboard?date=${date}`)
       if (!res.ok) throw new Error("Failed to load dashboard")

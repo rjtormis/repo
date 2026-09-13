@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
+import { useLayoutEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { IconPlus } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
@@ -55,15 +55,12 @@ export default function HomeScreen() {
 
   const { mutateAsync, isPending } = useCreateWorkoutSessions()
 
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      const nowLocal = new Date()
-      setClock(nowLocal)
-      const next = new Date(nowLocal)
-      next.setHours(12, 0, 0, 0)
-      setEndDate(next)
-    })
-    return () => cancelAnimationFrame(frame)
+  useLayoutEffect(() => {
+    const nowLocal = new Date()
+    setClock(nowLocal)
+    const next = new Date(nowLocal)
+    next.setHours(12, 0, 0, 0)
+    setEndDate(next)
   }, [])
 
   useLayoutEffect(() => {

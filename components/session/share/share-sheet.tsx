@@ -1,13 +1,23 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
-import { IconCheck, IconCopy, IconDownload, IconShare2 } from "@tabler/icons-react"
+import { useEffect, useRef, useState, type ChangeEvent } from "react"
+import {
+  IconCheck,
+  IconCopy,
+  IconDownload,
+  IconPhoto,
+  IconShare2,
+  IconX,
+} from "@tabler/icons-react"
 import { availableShareVariants } from "@/components/session/share/build-share-card"
 import { ShareCard } from "@/components/session/share/share-card"
 import {
+  SHARE_PHOTO_LAYOUTS,
+  SHARE_PHOTO_LAYOUT_LABEL,
   SHARE_STORY_HEIGHT,
   SHARE_STORY_WIDTH,
   type ShareCardData,
+  type SharePhotoLayout,
   type ShareVariant,
 } from "@/components/session/share/types"
 import { Button } from "@/components/ui/button"
@@ -25,12 +35,46 @@ import {
   downloadPng,
   sharePngFile,
 } from "@/lib/share-image"
+import { photoFileToCoverUrl } from "@/lib/share-photo"
 import { cn } from "@/lib/utils"
 
 const PREVIEW_WIDTH = 240
 const VARIANT_LABEL: Record<ShareVariant, string> = {
   session: "Session",
   pr: "Personal record",
+}
+
+type ShareSlide = {
+  id: string
+  label: string
+  variant: ShareVariant
+  layout?: SharePhotoLayout
+}
+
+function shareSlides(data: ShareCardData, photoSrc: string | null): ShareSlide[] {
+  if (!photoSrc) {
+    return availableShareVariants(data).map((variant) => ({
+      id: variant,
+      label: VARIANT_LABEL[variant],
+      variant,
+    }))
+  }
+
+  const slides: ShareSlide[] = SHARE_PHOTO_LAYOUTS.map((layout) => ({
+    id: `photo-${layout}`,
+    label: SHARE_PHOTO_LAYOUT_LABEL[layout],
+    variant: "session",
+    layout,
+  }))
+  if (data.record) {
+    slides.push({
+      id: "photo-pr",
+      label: "Record",
+      variant: "pr",
+      layout: "dock",
+    })
+  }
+  return slides
 }
 
 export function ShareSheet({
@@ -42,24 +86,26 @@ export function ShareSheet({
   onOpenChange: (open: boolean) => void
   data: ShareCardData
 }) {
-  const variants = availableShareVariants(data)
-  const [variant, setVariant] = useState<ShareVariant>("session")
-  const cardRefs = useRef<Partial<Record<ShareVariant, HTMLDivElement | null>>>(
-    {}
-  )
+  const [slideId, setSlideId] = useState("session")
+  const cardRefs = useRef<Partial<Record<string, HTMLDivElement | null>>>({})
   const scrollerRef = useRef<HTMLDivElement>(null)
-  const [busy, setBusy] = useState<"share" | "save" | "copy" | null>(null)
+  const photoRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState<"share" | "save" | "copy" | "photo" | null>(
+    null
+  )
   const [copied, setCopied] = useState(false)
   const [fileShare, setFileShare] = useState(false)
-  const selected = variants.includes(variant) ? variant : "session"
+  const [photoSrc, setPhotoSrc] = useState<string | null>(null)
+  const slides = shareSlides(data, photoSrc)
+  const selected = slides.find((slide) => slide.id === slideId) ?? slides[0]
   const record = data.record
   const filename =
-    selected === "pr" && record
+    selected?.variant === "pr" && record
       ? `${slug(record.exerciseName)}-pr-repo.png`
       : `${slug(data.name)}-repo.png`
   const profileUrl = `https://repo.fit/u/${data.handle ?? "you"}`
   const caption =
-    selected === "pr" && record
+    selected?.variant === "pr" && record
       ? `${record.exerciseName} · ${record.weightAmount} ${record.weightUnit} × ${record.reps}`
       : `${data.name} · ${data.volumeAmount} ${data.volumeUnit}`
 
@@ -69,42 +115,43 @@ export function ShareSheet({
 
   useEffect(() => {
     if (!open) return
-    setVariant("session")
+    setPhotoSrc(null)
+    setSlideId("session")
   }, [open])
 
   useEffect(() => {
     const node = scrollerRef.current
-    if (!open || !node) return
-    const child = node.querySelector<HTMLElement>(`[data-variant="${selected}"]`)
+    if (!open || !node || !selected) return
+    const child = node.querySelector<HTMLElement>(`[data-slide="${selected.id}"]`)
     child?.scrollIntoView({
       inline: "center",
       block: "nearest",
       behavior: "auto",
     })
-  }, [open, selected, variants.length])
+  }, [open, selected, slides.length])
 
   function onScroll() {
     const node = scrollerRef.current
     if (!node) return
     const mid = node.getBoundingClientRect().left + node.clientWidth / 2
-    let closest: ShareVariant = variants[0] ?? "session"
+    let closest = slides[0]?.id ?? "session"
     let best = Infinity
-    for (const child of node.querySelectorAll<HTMLElement>("[data-variant]")) {
+    for (const child of node.querySelectorAll<HTMLElement>("[data-slide]")) {
       const box = child.getBoundingClientRect()
       const center = box.left + box.width / 2
       const dist = Math.abs(center - mid)
       if (dist < best) {
         best = dist
-        closest = child.dataset.variant as ShareVariant
+        closest = child.dataset.slide ?? closest
       }
     }
-    setVariant(closest)
+    setSlideId(closest)
   }
 
-  function selectVariant(next: ShareVariant) {
-    setVariant(next)
+  function selectSlide(next: string) {
+    setSlideId(next)
     const child = scrollerRef.current?.querySelector<HTMLElement>(
-      `[data-variant="${next}"]`
+      `[data-slide="${next}"]`
     )
     child?.scrollIntoView({
       inline: "center",
@@ -113,8 +160,21 @@ export function ShareSheet({
     })
   }
 
+  async function onPhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = ""
+    if (!file) return
+    setBusy("photo")
+    try {
+      setPhotoSrc(await photoFileToCoverUrl(file))
+      setSlideId("photo-dock")
+    } finally {
+      setBusy(null)
+    }
+  }
+
   async function onShare() {
-    const node = cardRefs.current[selected]
+    const node = selected ? cardRefs.current[selected.id] : null
     if (!node) return
     setBusy("share")
     try {
@@ -130,7 +190,7 @@ export function ShareSheet({
   }
 
   async function onSave() {
-    const node = cardRefs.current[selected]
+    const node = selected ? cardRefs.current[selected.id] : null
     if (!node) return
     setBusy("save")
     try {
@@ -176,18 +236,18 @@ export function ShareSheet({
           className={cn(
             "-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1",
             "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-            variants.length === 1 && "justify-center"
+            slides.length === 1 && "justify-center"
           )}
         >
-          {variants.map((item) => (
+          {slides.map((slide) => (
             <Button
-              key={item}
+              key={slide.id}
               type="button"
               variant="transparent"
-              data-variant={item}
-              aria-pressed={item === selected}
-              aria-label={VARIANT_LABEL[item]}
-              onClick={() => selectVariant(item)}
+              data-slide={slide.id}
+              aria-pressed={slide.id === selected?.id}
+              aria-label={slide.label}
+              onClick={() => selectSlide(slide.id)}
               className="h-auto min-h-0 snap-center shrink-0 rounded-2xl p-0 text-start whitespace-normal active:translate-y-0"
             >
               <div
@@ -206,36 +266,38 @@ export function ShareSheet({
                 >
                   <ShareCard
                     data={data}
-                    variant={item}
+                    variant={slide.variant}
+                    photoSrc={photoSrc}
+                    photoLayout={slide.layout}
                     cardRef={(node) => {
-                      cardRefs.current[item] = node
+                      cardRefs.current[slide.id] = node
                     }}
                   />
                 </div>
               </div>
-              {variants.length > 1 ? (
+              {slides.length > 1 ? (
                 <p className="mt-2 text-center text-[11px] text-muted-foreground">
-                  {VARIANT_LABEL[item]}
+                  {slide.label}
                 </p>
               ) : null}
             </Button>
           ))}
         </div>
 
-        {variants.length > 1 ? (
+        {slides.length > 1 ? (
           <div className="mt-2 flex justify-center gap-1.5" role="tablist" aria-label="Share cards">
-            {variants.map((item) => (
+            {slides.map((slide) => (
               <Button
-                key={item}
+                key={slide.id}
                 type="button"
                 variant="transparent"
                 role="tab"
-                aria-selected={item === selected}
-                aria-label={VARIANT_LABEL[item]}
-                onClick={() => selectVariant(item)}
+                aria-selected={slide.id === selected?.id}
+                aria-label={slide.label}
+                onClick={() => selectSlide(slide.id)}
                 className={cn(
                   "min-h-0 rounded-full p-0 transition-[width,background-color] duration-200 ease-[var(--motion-ease-out)] active:translate-y-0",
-                  item === selected
+                  slide.id === selected?.id
                     ? "h-1.5 w-4 bg-foreground"
                     : "size-1.5 bg-muted-foreground/35"
                 )}
@@ -243,6 +305,47 @@ export function ShareSheet({
             ))}
           </div>
         ) : null}
+
+        <input
+          ref={photoRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="sr-only"
+          tabIndex={-1}
+          aria-hidden
+          onChange={(event) => {
+            void onPhotoChange(event)
+          }}
+        />
+        <div className="mt-3 flex gap-2">
+          <Button
+            variant="ghost-outline"
+            className="min-h-11 min-w-0 flex-1"
+            disabled={busy != null}
+            onClick={() => photoRef.current?.click()}
+          >
+            {busy === "photo" ? (
+              <Spinner />
+            ) : (
+              <IconPhoto className="size-5" stroke={1.5} />
+            )}
+            {photoSrc ? "Change photo" : "Add photo"}
+          </Button>
+          {photoSrc ? (
+            <Button
+              variant="ghost-outline"
+              className="min-h-11"
+              disabled={busy != null}
+              aria-label="Remove photo"
+              onClick={() => {
+                setPhotoSrc(null)
+                setSlideId("session")
+              }}
+            >
+              <IconX className="size-5" stroke={1.5} />
+            </Button>
+          ) : null}
+        </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Button

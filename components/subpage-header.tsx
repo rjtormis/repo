@@ -9,7 +9,7 @@ export function SubpageHeader({
   title,
   children,
   menu = false,
-  backHref = "/",
+  backHref = "/dashboard",
   hideTitle = false,
 }: {
   title: string
