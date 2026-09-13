@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+import { IconCheck } from "@tabler/icons-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -10,9 +12,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { IconCheck, IconTrash } from "@tabler/icons-react"
-import { useRouter } from "next/navigation"
-import { useState } from "react"
 
 export function RenameSessionDialog({
   open,
@@ -57,7 +56,6 @@ export function RenameSessionDialog({
             disabled={loading || draft == ""}
             aria-disabled={loading}
             variant="default"
-
             onClick={async (e) => {
               e.preventDefault()
               setLoading(true)
@@ -69,56 +67,6 @@ export function RenameSessionDialog({
             }}
           >
             <IconCheck /> {loading ? "Saving..." : "Save"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  )
-}
-
-export function DeleteSessionDialog({
-  open,
-  onOpenChange,
-  onConfirm,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onConfirm: () => Promise<void>
-}) {
-  const [loading, setLoading] = useState(false)
-  return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete this session?</AlertDialogTitle>
-          <AlertDialogDescription>
-            This removes it from your history and cannot be undone.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel
-            className="min-h-11"
-            disabled={loading}
-            aria-disabled={loading}
-          >
-            Cancel
-          </AlertDialogCancel>
-          <AlertDialogAction
-            disabled={loading}
-            aria-disabled={loading}
-            variant="destructive"
-            className="min-h-11"
-            onClick={async (e) => {
-              e.preventDefault()
-              setLoading(true)
-              try {
-                await onConfirm()
-              } finally {
-                setLoading(false)
-              }
-            }}
-          >
-            <IconTrash /> {loading ? "Deleting..." : "Delete session"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -27,6 +27,7 @@ import { useGetDashboardStats } from "@/hooks/tanstack/dashboard"
 import { useUserPrefs } from "@/lib/user-prefs"
 import { cn } from "@/lib/utils"
 import { useCreateWorkoutSessions } from "@/hooks/tanstack/session"
+import { Spinner } from "./ui/spinner"
 
 export default function HomeScreen() {
   const router = useRouter()
@@ -51,7 +52,7 @@ export default function HomeScreen() {
   const workoutSessions = stats?.recentSessions ?? []
   const heatmap = stats?.heatmap ?? []
 
-  const { mutateAsync } = useCreateWorkoutSessions()
+  const { mutateAsync, isPending } = useCreateWorkoutSessions()
 
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
@@ -136,9 +137,19 @@ export default function HomeScreen() {
         const result = await mutateAsync()
         router.push(`/dashboard/session/${result.id}`)
       }}
+      disabled={isPending}
+      aria-disabled={isPending}
     >
-      <IconPlus data-icon="inline-start" className="size-5" stroke={1.5} />
-      Start workout
+      {isPending ? (
+        <>
+          <Spinner /> Starting session...
+        </>
+      ) : (
+        <>
+          <IconPlus data-icon="inline-start" className="size-5" stroke={1.5} />{" "}
+          Start workout
+        </>
+      )}
     </Button>
   )
 

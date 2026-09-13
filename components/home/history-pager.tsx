@@ -30,17 +30,19 @@ export function HistoryPager({
         ]}
         className="mb-4"
       />
-      {page === "workouts" ? (
-        cards.length > 0 ? (
-          <PickupList cards={cards} />
+      <div key={page} className="motion-fade">
+        {page === "workouts" ? (
+          cards.length > 0 ? (
+            <PickupList cards={cards} />
+          ) : (
+            <p className="rounded-xl bg-surface-1 px-3.5 py-3.5 text-sm text-muted-foreground">
+              Finished workouts show up here so you can run them again.
+            </p>
+          )
         ) : (
-          <p className="rounded-xl bg-surface-1 px-3.5 py-3.5 text-sm text-muted-foreground">
-            Finished workouts show up here so you can run them again.
-          </p>
-        )
-      ) : (
-        <PrList records={records} unit={unit} />
-      )}
+          <PrList records={records} unit={unit} />
+        )}
+      </div>
     </section>
   )
 }

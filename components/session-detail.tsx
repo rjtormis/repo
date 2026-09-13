@@ -1,25 +1,37 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import {
+  useEffect,
+  useLayoutEffect,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react"
+import { flushSync } from "react-dom"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { IconChevronLeft, IconPlus } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
-import {
-  DeleteSessionDialog,
-  RenameSessionDialog,
-} from "@/components/session/dialogs"
-import { AddExerciseDrawer } from "@/components/session/add-exercise-drawer"
+import { DeleteSessionDialog } from "@/components/session/dialogs/delete-session-dialog"
+import { RenameSessionDialog } from "@/components/session/dialogs/rename-session-dialog"
+import { AddExerciseDrawer } from "@/components/session/drawers/add-exercise-drawer"
 import { EmptyExercises } from "@/components/session/empty-exercises"
 import { ExerciseCard } from "@/components/session/exercise-card"
 import { SessionHeader } from "@/components/session/header"
 import { SessionLiveLogger } from "@/components/session/live-logger"
 import {
   formatHeaderDate,
+  restorableSets,
   sessionSetCount,
   sessionStatusOf,
   sessionVolume,
+  weightKg,
 } from "@/components/session/lib"
+import {
+  buildShareCardData,
+  shareHandle,
+} from "@/components/session/share/build-share-card"
+import { ShareSheet } from "@/components/session/share/share-sheet"
 import { VolumeTrend } from "@/components/session/volume-trend"
 import { SessionStats } from "@/components/session/stats-row"
 import {
@@ -29,22 +41,67 @@ import {
   useAddWorkoutSet,
   useUpdateWorkoutSet,
   useDeleteSpecificSession,
+  useDeleteWorkoutExercise,
+  useDeleteWorkoutSet,
+  useRestoreWorkoutExercise,
   useUpdateWorkoutStartedAt,
 } from "@/hooks/tanstack/session"
+import { showRemovedToast } from "@/lib/undo-toast"
+import { authClient } from "@/lib/auth-client"
 import { useUserPrefs } from "@/lib/user-prefs"
+
+function subscribeReducedMotion(onChange: () => void) {
+  const media = window.matchMedia("(prefers-reduced-motion: reduce)")
+  media.addEventListener("change", onChange)
+  return () => media.removeEventListener("change", onChange)
+}
+
+function SessionLiveBoundary({
+  live,
+  children,
+}: {
+  live: boolean
+  children: (showLive: boolean) => ReactNode
+}) {
+  const [showLive, setShowLive] = useState(live)
+  const reduceMotion = useSyncExternalStore(
+    subscribeReducedMotion,
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    () => false
+  )
+  const canTransition =
+    !reduceMotion &&
+    typeof document !== "undefined" &&
+    typeof document.startViewTransition === "function"
+
+  useLayoutEffect(() => {
+    if (!canTransition || live === showLive) return
+    document.startViewTransition(() => {
+      flushSync(() => setShowLive(live))
+    })
+  }, [canTransition, live, showLive])
+
+  return children(canTransition ? showLive : live)
+}
 
 export function SessionDetail({ sessionId }: { sessionId: string }) {
   const router = useRouter()
 
   const { weightUnit } = useUserPrefs()
+  const { data: auth } = authClient.useSession()
   const { data, isPending, isError } = useGetSpecificSession(sessionId)
   const { mutateAsync } = useRenameSession(sessionId)
   const { mutateAsync: updateSessionStart, isPending: sessionStartPending } =
     useUpdateWorkoutStartedAt(sessionId)
-  const { mutateAsync: addExercises } = useAddExercisesToSession(sessionId)
+  const { mutateAsync: addExercises, isPending: addExercisePending } =
+    useAddExercisesToSession(sessionId)
   const { mutateAsync: saveSet } = useUpdateWorkoutSet(sessionId)
   const { mutateAsync: addSet } = useAddWorkoutSet(sessionId)
   const { mutateAsync: deleteSession } = useDeleteSpecificSession(sessionId)
+  const { mutateAsync: removeExercise, isPending: removeExercisePending } =
+    useDeleteWorkoutExercise(sessionId)
+  const { mutateAsync: removeSet } = useDeleteWorkoutSet(sessionId)
+  const { mutateAsync: restoreExercise } = useRestoreWorkoutExercise(sessionId)
 
   const [name, setName] = useState("")
   const [editing, setEditing] = useState(false)
@@ -52,6 +109,7 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
   const [renameOpen, setRenameOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [addOpen, setAddOpen] = useState(false)
+  const [shareOpen, setShareOpen] = useState(false)
 
   useEffect(() => {
     if (!data) return
@@ -89,13 +147,14 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
     return (
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="flex min-w-0 items-start gap-1">
-          <Link
-            href="/dashboard"
+          <Button
+            variant="quiet"
+            size="icon-touch"
+            render={<Link href="/dashboard" />}
             aria-label="Back"
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <IconChevronLeft className="size-5.5 rtl:rotate-180" stroke={1.5} />
-          </Link>
+          </Button>
           <div className="min-w-0 flex-1 pt-2">
             <h1 className="text-lg font-medium">Workout not found</h1>
             <p className="mt-1 font-mono text-xs text-muted-foreground">
@@ -108,10 +167,6 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
   }
 
   const sessionStatus = sessionStatusOf(data)
-  if (sessionStatus === "in_progress") {
-    return <SessionLiveLogger session={data} />
-  }
-
   const displayName = name || data.name
   const canLogSets = editing
 
@@ -125,6 +180,11 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
   }
 
   return (
+    <SessionLiveBoundary live={sessionStatus === "in_progress"}>
+      {(showLive) =>
+        showLive ? (
+          <SessionLiveLogger session={data} sessionStatus={sessionStatus} />
+        ) : (
     <div className="flex h-full min-h-0 min-w-0 flex-1 touch-pan-y flex-col overflow-hidden">
       <SessionHeader
         name={displayName}
@@ -159,7 +219,7 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
           <>
             <ul className="space-y-2">
               {data.exercises.map((row) => (
-                <li key={row.id}>
+                <li key={row.id} className="motion-enter">
                   <ExerciseCard
                     row={row}
                     unit={weightUnit}
@@ -169,24 +229,62 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
                       await saveSet({ setId, weightKg: nextWeight, reps })
                     }}
                     onAddSet={async (nextWeight, reps) => {
-                      await addSet({
+                      const next = await addSet({
                         workoutExerciseId: row.id,
                         weightKg: nextWeight,
                         reps,
+                      })
+                      return next?.exercises
+                        .find((entry) => entry.id === row.id)
+                        ?.workoutSets.at(-1)?.id
+                    }}
+                    onRemove={() => {
+                      const snapshot = {
+                        exerciseId: row.exercise.id,
+                        name: row.exercise.name,
+                        sets: restorableSets(row),
+                      }
+                      void removeExercise({ workoutExerciseId: row.id }).then(
+                        () => {
+                          showRemovedToast(snapshot.name, () => {
+                            void restoreExercise({
+                              exerciseId: snapshot.exerciseId,
+                              sets: snapshot.sets,
+                            })
+                          })
+                        }
+                      )
+                    }}
+                    onRemovePending={removeExercisePending}
+                    onRemoveSet={async (setId) => {
+                      const setLog = row.workoutSets.find(
+                        (item) => item.id === setId
+                      )
+                      await removeSet({ setId })
+                      if (!setLog) return
+                      showRemovedToast(row.exercise.name, () => {
+                        void addSet({
+                          workoutExerciseId: row.id,
+                          weightKg: weightKg(setLog.weight),
+                          reps: setLog.reps,
+                          completed: Boolean(setLog.completedAt),
+                        })
                       })
                     }}
                   />
                 </li>
               ))}
             </ul>
-            <Button
-              variant="ghost"
-              className="mt-4 w-full"
-              onClick={() => setAddOpen(true)}
-            >
-              <IconPlus className="mr-2" />
-              Add exercise
-            </Button>
+            {editing ? (
+              <Button
+                variant="quiet"
+                className="mt-4 h-11 w-full justify-start"
+                onClick={() => setAddOpen(true)}
+              >
+                <IconPlus className="mr-2" />
+                Add exercise
+              </Button>
+            ) : null}
           </>
         ) : (
           <EmptyExercises onAdd={() => setAddOpen(true)} />
@@ -204,6 +302,25 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
             Start Workout
           </Button>
         </div>
+      ) : sessionStatus == "finished" && !editing ? (
+        <div className="sticky bottom-0 z-10 -mx-4 border-t border-border bg-background px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]">
+          <Button
+            size="lg"
+            className="h-12 min-h-11 w-full text-base"
+            onClick={() => setShareOpen(true)}
+          >
+            Share
+          </Button>
+          <Button
+            size="lg"
+            variant="ghost-outline"
+            className="mt-2 h-12 min-h-11 w-full text-base"
+            onClick={handleStartFinishWorkout}
+            disabled={sessionStartPending}
+          >
+            Repeat this workout
+          </Button>
+        </div>
       ) : null}
 
       <RenameSessionDialog
@@ -218,6 +335,13 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
         onOpenChange={setDeleteOpen}
         onConfirm={handleDeleteSession}
       />
+      <ShareSheet
+        open={shareOpen}
+        onOpenChange={setShareOpen}
+        data={buildShareCardData(data, weightUnit, {
+          handle: shareHandle(auth?.user.name, auth?.user.email),
+        })}
+      />
       <AddExerciseDrawer
         open={addOpen}
         onOpenChange={setAddOpen}
@@ -226,7 +350,11 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
             exerciseIds: exercises.map((exercise) => exercise.id),
           })
         }}
+        isLoading={addExercisePending}
       />
     </div>
+        )
+      }
+    </SessionLiveBoundary>
   )
 }

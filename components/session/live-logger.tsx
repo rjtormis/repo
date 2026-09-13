@@ -1,65 +1,79 @@
 "use client"
 
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useEffect, useMemo, useState } from "react"
 import { IconChevronLeft, IconPencil, IconPlus } from "@tabler/icons-react"
-import { AddExerciseDrawer } from "@/components/session/add-exercise-drawer"
+import { DiscardSessionDialog } from "@/components/session/dialogs/discard-session-dialog"
+import { FinishWorkoutDialog } from "@/components/session/dialogs/finish-workout-dialog"
+import { AddExerciseDrawer } from "@/components/session/drawers/add-exercise-drawer"
 import { EmptyExercises } from "@/components/session/empty-exercises"
 import { LiveExercise } from "@/components/session/live-exercise"
 import {
   formatElapsedClock,
+  restorableSets,
   sessionSetCount,
   sessionVolume,
+  weightKg,
 } from "@/components/session/lib"
 import { SessionStats } from "@/components/session/stats-row"
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import {
   useAddExercisesToSession,
   useAddWorkoutSet,
   useCompleteWorkoutSet,
+  useDeleteSpecificSession,
   useDeleteWorkoutExercise,
   useDeleteWorkoutSet,
   useRenameSession,
+  useRestoreWorkoutExercise,
   useUpdateWorkingWeight,
   useUpdateWorkoutSet,
   useUpdateWorkoutStartedAt,
 } from "@/hooks/tanstack/session"
+import { showRemovedToast } from "@/lib/undo-toast"
 import { useUserPrefs } from "@/lib/user-prefs"
 import type { WorkoutSessionDetail } from "@/types/session.types"
+import { MuscleGroup } from "@/generated/prisma/enums"
+import { NameWorkoutDialog } from "./dialogs/name-workout-dialog"
+
+function isDefaultWorkoutName(value: string) {
+  return value.trim().toLowerCase() === "new workout"
+}
 
 export function SessionLiveLogger({
   session,
+  sessionStatus,
 }: {
   session: WorkoutSessionDetail
+  sessionStatus: string
 }) {
+  const router = useRouter()
   const { weightUnit } = useUserPrefs()
   const sessionId = session.id
-  const { mutateAsync: rename } = useRenameSession(sessionId)
-  const { mutateAsync: finish, isPending: finishing } =
+  const { mutateAsync: rename, isPending: renaming } = useRenameSession(sessionId)
+  const { mutateAsync: finishWorkout, isPending: finishWorkOutPending } =
     useUpdateWorkoutStartedAt(sessionId)
-  const { mutateAsync: addExercises } = useAddExercisesToSession(sessionId)
+  const { mutateAsync: addExercises, isPending: addExercisePending } =
+    useAddExercisesToSession(sessionId)
   const { mutateAsync: addSet } = useAddWorkoutSet(sessionId)
   const { mutateAsync: saveSet } = useUpdateWorkoutSet(sessionId)
   const { mutateAsync: completeSet } = useCompleteWorkoutSet(sessionId)
   const { mutateAsync: setWorkingWeight } = useUpdateWorkingWeight(sessionId)
-  const { mutateAsync: removeExercise } = useDeleteWorkoutExercise(sessionId)
+  const { mutateAsync: removeExercise, isPending: removeExercisePending } =
+    useDeleteWorkoutExercise(sessionId)
   const { mutateAsync: removeSet } = useDeleteWorkoutSet(sessionId)
+  const { mutateAsync: restoreExercise } = useRestoreWorkoutExercise(sessionId)
+  const { mutateAsync: discardSession, isPending: discarding } =
+    useDeleteSpecificSession(sessionId)
 
   const [name, setName] = useState(session.name)
   const [editingName, setEditingName] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   const [addOpen, setAddOpen] = useState(false)
   const [finishConfirmOpen, setFinishConfirmOpen] = useState(false)
+  const [discardOpen, setDiscardOpen] = useState(false)
+  const [nameDialogOpen, setNameDialogOpen] = useState(false)
   const [activeEntryId, setActiveEntryId] = useState<string | null>(() => {
     const pending = session.exercises.find((row) =>
       row.workoutSets.some((setLog) => !setLog.completedAt)
@@ -75,19 +89,6 @@ export function SessionLiveLogger({
     const id = window.setInterval(() => setNow(Date.now()), 1000)
     return () => window.clearInterval(id)
   }, [])
-
-  useEffect(() => {
-    if (
-      activeEntryId &&
-      session.exercises.some((row) => row.id === activeEntryId)
-    ) {
-      return
-    }
-    const pending = session.exercises.find((row) =>
-      row.workoutSets.some((setLog) => !setLog.completedAt)
-    )
-    setActiveEntryId(pending?.id ?? session.exercises[0]?.id ?? null)
-  }, [activeEntryId, session.exercises])
 
   const startedAt = new Date(session.startedAt ?? session.createdAt).getTime()
   const unloggedExerciseCount = session.exercises.filter(
@@ -110,24 +111,44 @@ export function SessionLiveLogger({
   }
 
   async function requestFinish() {
-    if (unloggedExerciseCount > 0 && session.exercises.length > 0) {
+    if (session.exercises.length === 0) {
+      setDiscardOpen(true)
+      return
+    }
+    if (unloggedExerciseCount > 0) {
       setFinishConfirmOpen(true)
       return
     }
-    await finish("in_progress")
+    if (isDefaultWorkoutName(session.name)) {
+      setNameDialogOpen(true)
+      return
+    }
+
+    await finishWorkout("in_progress")
+  }
+
+  async function finishAfterName(nextName?: string) {
+    const trimmed = nextName?.trim()
+    if (trimmed && trimmed.toLowerCase() !== session.name.trim().toLowerCase()) {
+      await rename({ name: trimmed })
+    }
+    await finishWorkout("in_progress")
+    setNameDialogOpen(false)
   }
 
   return (
     <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden overscroll-y-contain">
       <header className="pb-4">
         <div className="flex min-h-11 items-center gap-1">
-          <Link
-            href="/dashboard"
+          <Button
+            className=""
+            variant="quiet"
+            size="icon-touch"
+            render={<Link href="/dashboard" />}
             aria-label="Back"
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <IconChevronLeft className="size-5.5 rtl:rotate-180" stroke={1.5} />
-          </Link>
+          </Button>
 
           <div className="flex min-w-0 flex-1 items-center gap-1">
             {editingName ? (
@@ -144,21 +165,22 @@ export function SessionLiveLogger({
                 className="min-w-0 flex-1 bg-transparent text-base font-medium outline-none"
               />
             ) : (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={() => setEditingName(true)}
-                className="flex max-w-full min-w-0 items-center gap-1 text-start"
+                className="h-auto max-w-full min-w-0 justify-start gap-1 px-1 text-start"
               >
-                <span className="truncate text-base font-medium">{name}</span>
+                <span className="mr-2 truncate text-base font-medium">
+                  {name}
+                </span>
                 <IconPencil
                   className="size-4.5 shrink-0 text-muted-foreground"
                   stroke={1.5}
                   aria-hidden
                 />
-              </button>
+              </Button>
             )}
           </div>
-
           <span className="shrink-0 font-mono text-sm text-muted-foreground tabular-nums">
             {formatElapsedClock(now - startedAt)}
           </span>
@@ -181,7 +203,7 @@ export function SessionLiveLogger({
           <>
             <ul className="space-y-2">
               {session.exercises.map((row, index) => (
-                <li key={row.id}>
+                <li key={row.id} className="motion-enter">
                   <LiveExercise
                     row={row}
                     index={index}
@@ -201,8 +223,36 @@ export function SessionLiveLogger({
                       if (next) setActiveEntryId(next.id)
                     }}
                     onRemove={() => {
-                      void removeExercise({ workoutExerciseId: row.id })
+                      const snapshot = {
+                        exerciseId: row.exercise.id,
+                        name: row.exercise.name,
+                        sets: restorableSets(row),
+                      }
+                      if (activeEntryId === row.id) {
+                        const remaining = session.exercises.filter(
+                          (entry) => entry.id !== row.id
+                        )
+                        const pending = remaining.find((entry) =>
+                          entry.workoutSets.some(
+                            (setLog) => !setLog.completedAt
+                          )
+                        )
+                        setActiveEntryId(
+                          pending?.id ?? remaining[0]?.id ?? null
+                        )
+                      }
+                      void removeExercise({ workoutExerciseId: row.id }).then(
+                        () => {
+                          showRemovedToast(snapshot.name, () => {
+                            void restoreExercise({
+                              exerciseId: snapshot.exerciseId,
+                              sets: snapshot.sets,
+                            })
+                          })
+                        }
+                      )
                     }}
+                    onRemovePending={removeExercisePending}
                     onCompleteSet={async (setId) => {
                       await completeSet({ setId })
                     }}
@@ -210,15 +260,30 @@ export function SessionLiveLogger({
                       await saveSet({ setId, weightKg: nextWeight, reps })
                     }}
                     onAddSet={async (nextWeight, reps) => {
-                      await addSet({
+                      const next = await addSet({
                         workoutExerciseId: row.id,
                         weightKg: nextWeight,
                         reps,
                         completed: false,
                       })
+                      return next?.exercises
+                        .find((entry) => entry.id === row.id)
+                        ?.workoutSets.at(-1)?.id
                     }}
                     onRemoveSet={async (setId) => {
+                      const setLog = row.workoutSets.find(
+                        (item) => item.id === setId
+                      )
                       await removeSet({ setId })
+                      if (!setLog) return
+                      showRemovedToast(row.exercise.name, () => {
+                        void addSet({
+                          workoutExerciseId: row.id,
+                          weightKg: weightKg(setLog.weight),
+                          reps: setLog.reps,
+                          completed: Boolean(setLog.completedAt),
+                        })
+                      })
                     }}
                     onWorkingWeight={async (nextWeight) => {
                       await setWorkingWeight({
@@ -230,14 +295,14 @@ export function SessionLiveLogger({
                 </li>
               ))}
             </ul>
-            <button
-              type="button"
+            <Button
+              variant="quiet"
+              className="mt-4 h-11 w-full justify-start"
               onClick={() => setAddOpen(true)}
-              className="mt-4 flex min-h-11 w-full items-center gap-2 rounded-md text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
             >
               <IconPlus className="size-5" stroke={1.5} />
               Add Exercise
-            </button>
+            </Button>
           </>
         ) : (
           <EmptyExercises live onAdd={() => setAddOpen(true)} />
@@ -251,40 +316,47 @@ export function SessionLiveLogger({
           onClick={() => {
             void requestFinish()
           }}
-          disabled={finishing}
+          disabled={finishWorkOutPending || discarding}
         >
           Finish
         </Button>
       </div>
 
-      <AlertDialog open={finishConfirmOpen} onOpenChange={setFinishConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {unloggedExerciseCount}{" "}
-              {unloggedExerciseCount === 1 ? "exercise has" : "exercises have"}{" "}
-              no sets. Finish anyway?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Your logged sets will be kept; unfinished exercises will remain
-              empty.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="min-h-11">
-              Keep Logging
-            </AlertDialogCancel>
-            <AlertDialogAction
-              className="min-h-11"
-              onClick={() => {
-                void finish("in_progress")
-              }}
-            >
-              Finish anyway
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <FinishWorkoutDialog
+        open={finishConfirmOpen}
+        onOpenChange={setFinishConfirmOpen}
+        unloggedExerciseCount={unloggedExerciseCount}
+        onFinish={() => {
+          setFinishConfirmOpen(false)
+          if (isDefaultWorkoutName(session.name)) {
+            setNameDialogOpen(true)
+            return
+          }
+          void finishWorkout("in_progress")
+        }}
+        onFinishPending={finishWorkOutPending}
+      />
+      <DiscardSessionDialog
+        open={discardOpen}
+        onOpenChange={setDiscardOpen}
+        discardPending={discarding}
+        onDiscard={() => {
+          void discardSession().then(() => {
+            router.push("/dashboard")
+          })
+        }}
+      />
+      <NameWorkoutDialog
+        open={nameDialogOpen}
+        onOpenChange={setNameDialogOpen}
+        onSave={(nextName) => {
+          void finishAfterName(nextName)
+        }}
+        onSkip={() => {
+          void finishAfterName()
+        }}
+        onSavePending={renaming || finishWorkOutPending}
+      />
 
       <AddExerciseDrawer
         open={addOpen}
@@ -294,9 +366,18 @@ export function SessionLiveLogger({
             exerciseIds: exercises.map((exercise) => exercise.id),
           }).then((next) => {
             const added = next?.exercises.at(-1)
+            console.log(added)
             if (added) setActiveEntryId(added.id)
           })
         }}
+        selectedExercises={session.exercises.map((e) => {
+          return {
+            id: e.exercise.id,
+            name: e.exercise.name,
+            muscleGroups: e.exercise.muscleGroup,
+          }
+        })}
+        isLoading={addExercisePending}
       />
     </div>
   )

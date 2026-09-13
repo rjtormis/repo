@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { IconChevronLeft } from "@tabler/icons-react"
 import { NavigationMenu } from "@/components/navigation-menu"
+import { Button } from "@/components/ui/button"
 
 export function SubpageHeader({
   title,
@@ -19,13 +20,14 @@ export function SubpageHeader({
 }) {
   return (
     <header className="flex min-h-11 items-center gap-1 pb-3">
-      <Link
-        href={backHref}
+      <Button
+        variant="quiet"
+        size="icon-touch"
+        render={<Link href={backHref} />}
         aria-label="Back"
-        className="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
       >
         <IconChevronLeft className="size-5.5 rtl:rotate-180" stroke={1.5} />
-      </Link>
+      </Button>
       <h1
         className={
           hideTitle

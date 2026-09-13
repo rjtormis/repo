@@ -14,9 +14,21 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+        "ghost-outline":
+          "border-border bg-transparent hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+        quiet:
+          "text-muted-foreground hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+        set: "border border-success bg-success text-emerald-950 hover:bg-success/90",
+        "set-pending":
+          "border border-dashed border-muted-foreground/50 bg-transparent text-muted-foreground hover:border-muted-foreground hover:text-foreground active:bg-muted",
+        filter: "bg-muted text-muted-foreground hover:text-foreground",
+        "filter-active": "bg-foreground text-background hover:bg-foreground/90",
         destructive:
           "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
+        "destructive-solid":
+          "bg-[color-mix(in_oklch,var(--destructive),black_32%)] text-white hover:bg-[color-mix(in_oklch,var(--destructive),black_42%)] focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40",
         link: "text-primary underline-offset-4 hover:underline",
+        transparent: "bg-transparent",
       },
       size: {
         default:
@@ -30,6 +42,9 @@ const buttonVariants = cva(
         "icon-sm":
           "size-8 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-md",
         "icon-lg": "size-10",
+        "icon-touch": "size-11",
+        chip: "min-h-11 w-[52px] flex-col gap-0 px-0 font-mono text-sm tabular-nums",
+        row: "h-auto min-h-16 w-full justify-start gap-3 whitespace-normal px-1 py-2 text-start",
       },
     },
     defaultVariants: {
@@ -48,7 +63,7 @@ function Button({
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonVariants({ variant, size }), className)}
       {...props}
     />
   )

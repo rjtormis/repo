@@ -5,6 +5,7 @@ import Link from "next/link"
 import InfiniteScroll from "react-infinite-scroll-component"
 import { IconChevronRight, IconSearch } from "@tabler/icons-react"
 import { MuscleGroupIcon } from "@/components/session/muscle-group"
+import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { SubpageHeader } from "@/components/subpage-header"
 import { useGetExercises } from "@/hooks/tanstack/exrcise"
@@ -63,7 +64,7 @@ export function ExerciseLibrary() {
         />
       </label>
 
-      <div className="-mx-4 mb-2 flex shrink-0 gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="mb-2 flex min-w-0 max-w-full shrink-0 gap-1.5 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <FilterChip
           label="All"
           selected={muscleGroup === ""}
@@ -160,18 +161,13 @@ function FilterChip({
   onClick: () => void
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant={selected ? "filter-active" : "filter"}
+      className="shrink-0"
       onClick={onClick}
-      className={cn(
-        "h-9 shrink-0 rounded-md px-2.5 text-sm",
-        selected
-          ? "bg-foreground text-background"
-          : "bg-muted text-muted-foreground hover:text-foreground"
-      )}
     >
       {label}
-    </button>
+    </Button>
   )
 }
 

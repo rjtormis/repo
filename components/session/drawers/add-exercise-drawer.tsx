@@ -2,7 +2,12 @@
 
 import { useEffect, useState, type CSSProperties } from "react"
 import InfiniteScroll from "react-infinite-scroll-component"
-import { IconCircle, IconCircleCheck, IconSearch } from "@tabler/icons-react"
+import {
+  IconCircle,
+  IconCircleCheck,
+  IconSearch,
+  IconX,
+} from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import {
@@ -14,13 +19,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet"
 import { MuscleGroupIcon } from "@/components/session/muscle-group"
-import {
-  MUSCLE_GROUP_FILTERS,
-  muscleGroupLabel,
-} from "@/lib/muscle-groups"
+import { MUSCLE_GROUP_FILTERS, muscleGroupLabel } from "@/lib/muscle-groups"
 import { useGetExercises } from "@/hooks/tanstack/exrcise"
 import type { CatalogExercise } from "@/types/exercise.types"
 import { cn } from "@/lib/utils"
+import { Spinner } from "@/components/ui/spinner"
 
 const LIST_ID = "add-exercise-list"
 const SHEET_MAX_PX = 32 * 16
@@ -58,10 +61,14 @@ export function AddExerciseDrawer({
   open,
   onOpenChange,
   onSelect,
+  isLoading,
+  selectedExercises,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSelect?: (exercises: CatalogExercise[]) => void
+  isLoading: boolean
+  selectedExercises?: CatalogExercise[]
 }) {
   const [query, setQuery] = useState("")
   const [debounced, setDebounced] = useState("")
@@ -70,6 +77,8 @@ export function AddExerciseDrawer({
   const [selected, setSelected] = useState<Record<string, CatalogExercise>>({})
   const [scrolling, setScrolling] = useState(false)
   const sheetHeight = usePhoneSheetHeight(open)
+
+  console.log(selectedExercises)
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim()), 250)
@@ -121,7 +130,9 @@ export function AddExerciseDrawer({
   function confirm() {
     if (selectedCount === 0) return
     onSelect?.(selectedList)
-    close()
+    setTimeout(() => {
+      close()
+    }, 500)
   }
 
   return (
@@ -135,7 +146,7 @@ export function AddExerciseDrawer({
       <SheetContent
         side="bottom"
         showCloseButton={false}
-        className="mx-auto flex w-full max-w-lg flex-col gap-0 overflow-hidden rounded-t-xl px-4 pt-3 data-[side=bottom]:h-[var(--add-exercise-sheet-h,68svh)] data-[side=bottom]:max-h-[calc(100svh-0.5rem)] pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]"
+        className="mx-auto flex w-full max-w-lg flex-col gap-0 overflow-hidden rounded-t-xl px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] data-[side=bottom]:h-[var(--add-exercise-sheet-h,68svh)] data-[side=bottom]:max-h-[calc(100svh-0.5rem)]"
         style={
           {
             "--add-exercise-sheet-h": sheetHeight
@@ -156,12 +167,13 @@ export function AddExerciseDrawer({
             </SheetDescription>
           </div>
           <Button
-            variant="ghost"
-            size="sm"
+            variant="destructive"
+            size="icon"
             className="min-h-11"
+
             onClick={close}
           >
-            Close
+            <IconX />
           </Button>
         </SheetHeader>
 
@@ -179,7 +191,7 @@ export function AddExerciseDrawer({
           />
         </label>
 
-        <div className="-mx-4 mb-2 flex shrink-0 gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mb-2 flex max-w-full min-w-0 shrink-0 [scrollbar-width:none] gap-1.5 overflow-x-auto overscroll-x-contain pb-1 [&::-webkit-scrollbar]:hidden">
           <FilterChip
             label="All"
             selected={muscleGroup === ""}
@@ -211,7 +223,7 @@ export function AddExerciseDrawer({
           id={LIST_ID}
           onScroll={() => setScrolling(true)}
           className={cn(
-            "min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain scrollbar-modern",
+            "scrollbar-modern min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain",
             scrolling && "is-scrolling"
           )}
         >
@@ -239,15 +251,14 @@ export function AddExerciseDrawer({
               scrollableTarget={LIST_ID}
               className="flex min-w-0 flex-col gap-1.5"
             >
-              {recents.length > 0 ? (
-                <SectionLabel>Recent</SectionLabel>
-              ) : null}
+              {recents.length > 0 ? <SectionLabel>Recent</SectionLabel> : null}
               {recents.map((item) => (
                 <ExercisePickRow
                   key={`recent-${item.id}`}
                   item={item}
                   selected={Boolean(selected[item.id])}
                   onToggle={() => toggle(item)}
+                  disabled={selectedExercises?.some((e) => e.id === item.id)}
                 />
               ))}
               {items.length > 0 && recents.length > 0 ? (
@@ -261,6 +272,7 @@ export function AddExerciseDrawer({
                   item={item}
                   selected={Boolean(selected[item.id])}
                   onToggle={() => toggle(item)}
+                  disabled={selectedExercises?.some((e) => e.id === item.id)}
                 />
               ))}
             </InfiniteScroll>
@@ -271,9 +283,11 @@ export function AddExerciseDrawer({
           <Button
             size="lg"
             className="h-12 min-h-11 w-full text-base"
-            disabled={selectedCount === 0}
+            disabled={selectedCount === 0 || isLoading}
             onClick={confirm}
+            aria-disabled={isLoading}
           >
+            {isLoading ? <Spinner /> : null}
             {selectedCount === 0
               ? "Select exercises"
               : `Add ${selectedCount} ${
@@ -304,18 +318,13 @@ function FilterChip({
   onClick: () => void
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant={selected ? "filter-active" : "filter"}
+      className="shrink-0"
       onClick={onClick}
-      className={cn(
-        "h-9 shrink-0 rounded-md px-2.5 text-sm",
-        selected
-          ? "bg-foreground text-background"
-          : "bg-muted text-muted-foreground hover:text-foreground"
-      )}
     >
       {label}
-    </button>
+    </Button>
   )
 }
 
@@ -323,25 +332,28 @@ function ExercisePickRow({
   item,
   selected,
   onToggle,
+  disabled,
 }: {
   item: CatalogExercise
   selected: boolean
   onToggle: () => void
+  disabled?: boolean
 }) {
   return (
     <button
       type="button"
+      disabled={disabled}
       aria-pressed={selected}
       onClick={onToggle}
       className={cn(
-        "flex min-h-12 min-w-0 w-full items-center gap-3 rounded-md px-2.5 py-2 text-start text-sm",
-        selected ? "bg-muted" : "hover:bg-muted"
+        "flex min-h-12 w-full min-w-0 items-center gap-3 rounded-md px-2.5 py-2 text-start text-sm",
+        selected || disabled ? "bg-muted" : "hover:bg-muted"
       )}
     >
       <span
         className={cn(
           "grid size-9 shrink-0 place-items-center rounded-md text-muted-foreground",
-          selected ? "bg-background" : "bg-muted"
+          selected || disabled ? "bg-background" : "bg-muted"
         )}
         aria-hidden
       >
@@ -353,7 +365,7 @@ function ExercisePickRow({
           {muscleGroupLabel(item.muscleGroups)}
         </span>
       </span>
-      {selected ? (
+      {selected || disabled ? (
         <IconCircleCheck
           className="size-5 shrink-0 text-foreground"
           stroke={1.5}

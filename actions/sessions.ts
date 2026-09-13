@@ -748,3 +748,54 @@ export const deleteWorkoutSet = async ({
     sessionId,
   })
 }
+
+export const restoreWorkoutExercise = async ({
+  sessionId,
+  exerciseId,
+  sets,
+}: {
+  sessionId: string
+  exerciseId: string
+  sets: { weightKg: number | null; reps: number; completed: boolean }[]
+}) => {
+  const session = await getServerSession()
+  if (!session) throw new Error("Sign in to edit a workout")
+
+  const workoutSession = await getSpecificSession({
+    userId: session.user.id,
+    sessionId,
+  })
+  if (!workoutSession) throw new Error("Workout session does not exists.")
+
+  const position =
+    workoutSession.exercises.reduce(
+      (max, row) => Math.max(max, row.position),
+      -1
+    ) + 1
+
+  const row = await prisma.workoutExercise.create({
+    data: {
+      workoutSessionId: sessionId,
+      exerciseId,
+      position,
+    },
+    select: { id: true },
+  })
+
+  if (sets.length > 0) {
+    await prisma.workoutSet.createMany({
+      data: sets.map((setLog, index) => ({
+        workoutExerciseId: row.id,
+        position: index,
+        weight: setLog.weightKg,
+        reps: Math.round(setLog.reps),
+        completedAt: setLog.completed ? new Date() : null,
+      })),
+    })
+  }
+
+  return getSpecificSession({
+    userId: session.user.id,
+    sessionId,
+  })
+}
