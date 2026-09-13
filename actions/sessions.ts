@@ -172,7 +172,7 @@ async function attachReview(
   ]
   const previousByExercise: Record<
     string,
-    { weightKg: number; achievedAt: string } | null
+    { weightKg: number; reps: number; achievedAt: string } | null
   > = Object.fromEntries(exerciseIds.map((id) => [id, null]))
   const previousSetsByExercise: Record<
     string,
@@ -207,6 +207,7 @@ async function attachReview(
       if (!best) continue
       previousByExercise[exerciseId] = {
         weightKg: best.weightKg,
+        reps: best.reps,
         achievedAt: row.startedAt ? row.startedAt.toISOString() : "",
       }
     }

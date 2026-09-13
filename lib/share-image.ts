@@ -1,4 +1,8 @@
 import { domToPng, domToBlob } from "modern-screenshot"
+import {
+  SHARE_STORY_HEIGHT,
+  SHARE_STORY_WIDTH,
+} from "@/components/session/share/types"
 
 export function canShareFiles() {
   if (typeof navigator === "undefined" || typeof navigator.canShare !== "function") {
@@ -15,7 +19,9 @@ export function canShareFiles() {
 export async function captureSharePng(node: HTMLElement) {
   return domToPng(node, {
     scale: 3,
-    backgroundColor: "#0a0a0a",
+    width: SHARE_STORY_WIDTH,
+    height: SHARE_STORY_HEIGHT,
+    backgroundColor: "#0A0A0A",
   })
 }
 
@@ -32,7 +38,9 @@ export async function sharePngFile({
 }) {
   const blob = await domToBlob(node, {
     scale: 3,
-    backgroundColor: "#0a0a0a",
+    width: SHARE_STORY_WIDTH,
+    height: SHARE_STORY_HEIGHT,
+    backgroundColor: "#0A0A0A",
   })
   if (!blob) throw new Error("Couldn’t render that card.")
 
