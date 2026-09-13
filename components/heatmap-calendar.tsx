@@ -569,12 +569,13 @@ export function HeatmapCalendar({
       <Tooltip key={`${cell.key}-${colIndex}`}>
         <TooltipTrigger
           render={
-            <button
+            <Button
               type="button"
+              variant="transparent"
               disabled={inert}
               onClick={() => !inert && onCellClick?.(cell)}
               className={cn(
-                "rounded-xs ring-offset-background outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                "h-auto min-h-0 rounded-xs p-0 active:translate-y-0",
                 fillWidth ? "aspect-square w-full shrink-0" : undefined,
                 !palette?.length && cls,
                 inert && "pointer-events-none cursor-default opacity-40"

@@ -72,13 +72,22 @@ export const useAddExercisesToSession = (id: string) => {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({
-      exerciseIds,
+      exercises,
     }: {
-      exerciseIds: string[]
+      exercises: { id: string; name: string }[]
     }): ReturnType<typeof addExercisesToSession> =>
-      addExercisesToSession({ sessionId: id, exerciseIds }),
+      addExercisesToSession({
+        sessionId: id,
+        exerciseIds: exercises.map((e) => e.id),
+      }),
     onSuccess: (next) => {
       if (next) qc.setQueryData(["sessions", id], next)
+      qc.invalidateQueries({ queryKey: ["sessions", id] })
+      qc.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+    onSettled: (next) => {
+      if (next) qc.setQueryData(["sessions", id], next)
+
       qc.invalidateQueries({ queryKey: ["sessions", id] })
       qc.invalidateQueries({ queryKey: ["dashboard"] })
     },

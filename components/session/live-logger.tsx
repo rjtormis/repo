@@ -18,6 +18,7 @@ import {
 } from "@/components/session/lib"
 import { SessionStats } from "@/components/session/stats-row"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   useAddExercisesToSession,
   useAddWorkoutSet,
@@ -36,6 +37,7 @@ import { useUserPrefs } from "@/lib/user-prefs"
 import type { WorkoutSessionDetail } from "@/types/session.types"
 import { MuscleGroup } from "@/generated/prisma/enums"
 import { NameWorkoutDialog } from "./dialogs/name-workout-dialog"
+import { LiveExerciseShell } from "./live-exercise-shell"
 
 function isDefaultWorkoutName(value: string) {
   return value.trim().toLowerCase() === "new workout"
@@ -51,11 +53,15 @@ export function SessionLiveLogger({
   const router = useRouter()
   const { weightUnit } = useUserPrefs()
   const sessionId = session.id
-  const { mutateAsync: rename, isPending: renaming } = useRenameSession(sessionId)
+  const { mutateAsync: rename, isPending: renaming } =
+    useRenameSession(sessionId)
   const { mutateAsync: finishWorkout, isPending: finishWorkOutPending } =
     useUpdateWorkoutStartedAt(sessionId)
-  const { mutateAsync: addExercises, isPending: addExercisePending } =
-    useAddExercisesToSession(sessionId)
+  const {
+    mutateAsync: addExercises,
+    isPending: addExercisePending,
+    variables,
+  } = useAddExercisesToSession(sessionId)
   const { mutateAsync: addSet } = useAddWorkoutSet(sessionId)
   const { mutateAsync: saveSet } = useUpdateWorkoutSet(sessionId)
   const { mutateAsync: completeSet } = useCompleteWorkoutSet(sessionId)
@@ -129,7 +135,10 @@ export function SessionLiveLogger({
 
   async function finishAfterName(nextName?: string) {
     const trimmed = nextName?.trim()
-    if (trimmed && trimmed.toLowerCase() !== session.name.trim().toLowerCase()) {
+    if (
+      trimmed &&
+      trimmed.toLowerCase() !== session.name.trim().toLowerCase()
+    ) {
       await rename({ name: trimmed })
     }
     await finishWorkout("in_progress")
@@ -152,7 +161,7 @@ export function SessionLiveLogger({
 
           <div className="flex min-w-0 flex-1 items-center gap-1">
             {editingName ? (
-              <input
+              <Input
                 autoFocus
                 value={name}
                 onChange={(event) => setName(event.target.value)}
@@ -162,7 +171,7 @@ export function SessionLiveLogger({
                 onKeyDown={(event) => {
                   if (event.key === "Enter") void commitName()
                 }}
-                className="min-w-0 flex-1 bg-transparent text-base font-medium outline-none"
+                className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 text-base font-medium shadow-none dark:bg-transparent"
               />
             ) : (
               <Button
@@ -196,10 +205,10 @@ export function SessionLiveLogger({
 
       <div
         className={`min-h-0 min-w-0 flex-1 [scrollbar-width:none] overflow-y-auto overscroll-y-contain pb-28 [&::-webkit-scrollbar]:hidden ${
-          session.exercises.length > 0 ? "" : "flex"
+          session.exercises.length > 0 || addExercisePending ? "" : "flex"
         }`}
       >
-        {session.exercises.length > 0 ? (
+        {session.exercises.length > 0 || addExercisePending ? (
           <>
             <ul className="space-y-2">
               {session.exercises.map((row, index) => (
@@ -209,15 +218,17 @@ export function SessionLiveLogger({
                     index={index}
                     open={activeIndex === index}
                     unit={weightUnit}
+
                     previousSets={
                       session.previousSetsByExercise?.[row.exercise.id]
                     }
                     nextName={session.exercises[index + 1]?.exercise.name}
                     onToggle={() =>
-                      setActiveEntryId((current) =>
-                        current === row.id ? null : row.id
-                      )
+                      setActiveEntryId((current) => {
+                        return current === row.id ? null : row.id
+                      })
                     }
+                    onActiveEntryId={setActiveEntryId}
                     onNext={() => {
                       const next = session.exercises[index + 1]
                       if (next) setActiveEntryId(next.id)
@@ -228,19 +239,7 @@ export function SessionLiveLogger({
                         name: row.exercise.name,
                         sets: restorableSets(row),
                       }
-                      if (activeEntryId === row.id) {
-                        const remaining = session.exercises.filter(
-                          (entry) => entry.id !== row.id
-                        )
-                        const pending = remaining.find((entry) =>
-                          entry.workoutSets.some(
-                            (setLog) => !setLog.completedAt
-                          )
-                        )
-                        setActiveEntryId(
-                          pending?.id ?? remaining[0]?.id ?? null
-                        )
-                      }
+
                       void removeExercise({ workoutExerciseId: row.id }).then(
                         () => {
                           showRemovedToast(snapshot.name, () => {
@@ -294,6 +293,17 @@ export function SessionLiveLogger({
                   />
                 </li>
               ))}
+              {addExercisePending && variables
+                ? variables.exercises.map((exercise, index) => (
+                    <li key={`pending-${exercise.id}`} className="motion-enter">
+                      <LiveExerciseShell
+                        index={session.exercises.length + index}
+                        name={exercise.name}
+                        pending
+                      />
+                    </li>
+                  ))
+                : null}
             </ul>
             <Button
               variant="quiet"
@@ -363,10 +373,12 @@ export function SessionLiveLogger({
         onOpenChange={setAddOpen}
         onSelect={(exercises) => {
           void addExercises({
-            exerciseIds: exercises.map((exercise) => exercise.id),
+            exercises: exercises.map((e) => ({
+              id: e.id,
+              name: e.name,
+            })),
           }).then((next) => {
             const added = next?.exercises.at(-1)
-            console.log(added)
             if (added) setActiveEntryId(added.id)
           })
         }}

@@ -10,11 +10,9 @@ import { Switch } from "@/components/ui/switch"
 import { SubpageHeader } from "@/components/subpage-header"
 import { useGetExercises } from "@/hooks/tanstack/exrcise"
 import type { CatalogExercise } from "@/types/exercise.types"
-import {
-  MUSCLE_GROUP_FILTERS,
-  muscleGroupLabel,
-} from "@/lib/muscle-groups"
+import { MUSCLE_GROUP_FILTERS, muscleGroupLabel } from "@/lib/muscle-groups"
 import { cn } from "@/lib/utils"
+import { Input } from "./ui/input"
 
 const LIST_ID = "exercise-library-list"
 
@@ -56,7 +54,7 @@ export function ExerciseLibrary() {
           className="pointer-events-none absolute inset-s-3 top-1/2 size-4.5 -translate-y-1/2 text-muted-foreground"
           stroke={1.5}
         />
-        <input
+        <Input
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="Search exercises"
@@ -64,7 +62,7 @@ export function ExerciseLibrary() {
         />
       </label>
 
-      <div className="mb-2 flex min-w-0 max-w-full shrink-0 gap-1.5 overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="mb-2 flex max-w-full min-w-0 shrink-0 [scrollbar-width:none] gap-1.5 overflow-x-auto overscroll-x-contain pb-1 [&::-webkit-scrollbar]:hidden">
         <FilterChip
           label="All"
           selected={muscleGroup === ""}
@@ -96,7 +94,7 @@ export function ExerciseLibrary() {
         id={LIST_ID}
         onScroll={() => setScrolling(true)}
         className={cn(
-          "min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain scrollbar-modern",
+          "scrollbar-modern min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain",
           scrolling && "is-scrolling"
         )}
       >
@@ -175,7 +173,7 @@ function ExerciseRow({ item }: { item: CatalogExercise }) {
   return (
     <Link
       href={`/dashboard/exercises/${item.id}`}
-      className="flex min-h-12 min-w-0 w-full items-center gap-3 rounded-md px-2 text-start text-sm hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="flex min-h-12 w-full min-w-0 items-center gap-3 rounded-md px-2 text-start text-sm hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
       <span
         className="grid size-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"

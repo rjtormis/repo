@@ -12,6 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Input } from "@/components/ui/input"
 
 export function RenameSessionDialog({
   open,
@@ -37,11 +38,11 @@ export function RenameSessionDialog({
             Enter a new session name.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <input
+        <Input
           autoFocus
           value={draft}
           onChange={(event) => onDraftChange(event.target.value)}
-          className="h-11 w-full min-w-0 rounded-md border border-input bg-background px-3 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+          className="h-11"
         />
         <AlertDialogFooter>
           <AlertDialogCancel

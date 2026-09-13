@@ -31,10 +31,7 @@ import type {
 } from "@/types/session.types"
 import { Separator } from "../ui/separator"
 import { Spinner } from "../ui/spinner"
-
-function padIndex(index: number) {
-  return String(index + 1).padStart(2, "0")
-}
+import { Input } from "../ui/input"
 
 export function LiveExercise({
   row,
@@ -43,6 +40,7 @@ export function LiveExercise({
   unit,
   previousSets,
   nextName,
+  onActiveEntryId: _onActiveEntryId,
   onToggle,
   onNext,
   onRemove,
@@ -59,6 +57,7 @@ export function LiveExercise({
   unit: WeightUnit
   previousSets?: PreviousSet[]
   nextName?: string | null
+  onActiveEntryId: (id: string | null) => void
   onToggle: () => void
   onNext?: () => void
   onRemove: () => void
@@ -92,6 +91,7 @@ export function LiveExercise({
   )
   const [draft, setDraft] = useState<WorkoutSetDetail | "new" | null>(null)
   const [removeOpen, setRemoveOpen] = useState(false)
+  const [closingForRemove, setClosingForRemove] = useState(false)
   const [holdingId, setHoldingId] = useState<string | null>(null)
   const draftRef = useRef<WorkoutSetDetail | "new" | null>(null)
   const longPressTimerRef = useRef<number | null>(null)
@@ -185,92 +185,100 @@ export function LiveExercise({
     setDraft(null)
   }
 
+  function startRemove() {
+    setClosingForRemove(true)
+    setRemoveOpen(false)
+    onRemove()
+  }
+
+  const removing = closingForRemove || (onRemovePending && open)
+  const bodyOpen = open && !removing
+  const setCountLabel = `${completedCount} of ${sets.length} Sets`
+
   return (
     <section
       className={cn(
-        "min-w-0 rounded-xl transition-colors duration-200 ease",
-        open && "bg-surface-1 p-3"
+        "min-w-0 rounded-xl p-3 transition-colors duration-200 ease-(--motion-ease-out)",
+        (bodyOpen || removing) && "bg-surface-1"
       )}
     >
       <Button
-        variant={open ? "transparent" : "quiet"}
-        size={open ? undefined : "row"}
-        aria-expanded={open}
+        variant="transparent"
+        aria-expanded={bodyOpen}
+        disabled={removing}
         aria-label={
-          open ? `Collapse ${row.exercise.name}` : `Expand ${row.exercise.name}`
+          bodyOpen
+            ? `Collapse ${row.exercise.name}`
+            : `Expand ${row.exercise.name}`
         }
-        onClick={onToggle}
-        className={
-          open
-            ? "h-11 min-w-0 w-full justify-start gap-2.5 px-0 text-start"
-            : "min-w-0 rounded-xl p-3"
-        }
+        onClick={() => {
+          if (removing) return
+          onToggle()
+        }}
+        className={`${onRemovePending ? "pointer-events-none" : ""} h-auto min-h-0 w-full min-w-0 items-start justify-start gap-2.5 p-0 text-start whitespace-normal transition-colors`}
       >
-        <span
-          className={cn(
-            "w-6 shrink-0 font-mono text-sm font-medium text-success tabular-nums",
-            !open && "self-start pt-0.5 text-start"
+        <span className="w-6 shrink-0 pt-0.5 font-mono text-sm font-medium text-success tabular-nums">
+          {removing ? (
+            <Spinner className="text-destructive" />
+          ) : (
+            String(index + 1).padStart(2, "0")
           )}
-        >
-          {padIndex(index)}
         </span>
-        {open ? (
-          <h2 className="min-w-0 flex-1 truncate text-base font-medium">
-            {row.exercise.name}
-          </h2>
-        ) : (
-          <span className="min-w-0 flex-1 text-start">
-            <span
-              className={cn(
-                "block truncate text-sm",
-                isComplete
-                  ? "font-medium text-foreground"
-                  : "text-muted-foreground"
-              )}
-            >
-              {row.exercise.name}
-            </span>
-            {collapsedSummary ? (
-              <span className="mt-1 block truncate font-mono text-xs text-muted-foreground tabular-nums">
-                {collapsedSummary}
-              </span>
-            ) : null}
-          </span>
-        )}
-        {isComplete && !open ? (
-          <IconCheck
-            className="size-5.5 shrink-0 text-success"
-            stroke={1.5}
-            aria-hidden
-          />
-        ) : (
-          <IconChevronDown
+        <h2 className="min-w-0 flex-1 text-start text-sm font-medium">
+          <span
             className={cn(
-              "size-5.5 shrink-0 text-muted-foreground transition-transform duration-200 ease-(--motion-ease-out)",
-              open && "rotate-180"
+              "block truncate transition-colors duration-200 ease-(--motion-ease-out)",
+              isComplete || open ? "text-foreground" : "text-muted-foreground",
+              removing ? "text-destructive" : ""
             )}
+          >
+            {removing ? `Removing ${row.exercise.name}` : row.exercise.name}
+          </span>
+          {removing ? (
+            <span className="mt-1 block truncate font-mono text-xs font-normal text-muted-foreground tabular-nums">
+              {setCountLabel}
+            </span>
+          ) : !bodyOpen && collapsedSummary ? (
+            <span className="mt-1 block truncate font-mono text-xs font-normal text-muted-foreground tabular-nums">
+              {collapsedSummary}
+            </span>
+          ) : null}
+        </h2>
+        {isComplete ? (
+          <IconCheck
+            className="mt-0.5 size-5.5 shrink-0 text-success"
             stroke={1.5}
             aria-hidden
           />
-        )}
+        ) : null}
+        <IconChevronDown
+          className={cn(
+            "mt-0.5 size-5.5 shrink-0 text-muted-foreground transition-transform duration-200 ease-(--motion-ease-out)",
+            bodyOpen && "rotate-180"
+          )}
+          stroke={1.5}
+          aria-hidden
+        />
       </Button>
       <div
         className={cn(
           "motion-accordion",
-          open ? "motion-accordion-open" : "motion-accordion-closed"
+          bodyOpen ? "motion-accordion-open" : "motion-accordion-closed"
         )}
       >
-        <div className="overflow-hidden" inert={!open}>
+        <div className="min-h-0 overflow-hidden" inert={!bodyOpen}>
           <div className="space-y-3 pt-3">
             <div className="space-y-1.5">
               <p className="text-[11px] text-muted-foreground">
                 Working weight
               </p>
               <label className="flex items-center gap-2">
-                <input
+                <Input
                   type="number"
+                  disabled={removing}
+                  aria-disabled={removing}
                   inputMode="decimal"
-                  className="h-11 w-20 appearance-none rounded-md border border-input bg-background px-2 font-mono text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+                  className={`border ${weightDraft === "" ? "border-destructive" : ""} h-11 w-20 appearance-none rounded-md bg-background px-2 font-mono text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50`}
                   value={weightDraft}
                   onChange={(event) => setWeightDraft(event.target.value)}
                   onBlur={() => {
@@ -293,6 +301,8 @@ export function LiveExercise({
                   return (
                     <Button
                       key={setLog.id}
+                      disabled={weightDraft === ""}
+                      aria-disabled={weightDraft === ""}
                       variant={done ? "set" : "set-pending"}
                       size="chip"
                       aria-pressed={done}
@@ -349,6 +359,8 @@ export function LiveExercise({
                   variant="set-pending"
                   size="chip"
                   aria-label="Add set"
+                  disabled={weightDraft === ""}
+                  aria-disabled={weightDraft === ""}
                   onClick={openNew}
                 >
                   <IconPlus className="size-5" stroke={1.5} />
@@ -384,7 +396,7 @@ export function LiveExercise({
                 className="text-destructive hover:text-destructive"
                 onClick={() => {
                   if (completedCount === 0) {
-                    onRemove()
+                    startRemove()
                     return
                   }
                   setRemoveOpen(true)
@@ -423,10 +435,7 @@ export function LiveExercise({
         exerciseName={row.exercise.name}
         exerciseSets={completedCount}
         onRemovePending={onRemovePending}
-        onRemove={() => {
-          setRemoveOpen(false)
-          onRemove()
-        }}
+        onRemove={startRemove}
       />
     </section>
   )

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { IconMinus, IconPlus, IconTrash, IconX } from "@tabler/icons-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   Sheet,
   SheetClose,
@@ -231,12 +232,12 @@ function StepperField({
         >
           <IconMinus className="size-5" stroke={1.5} />
         </Button>
-        <input
+        <Input
           inputMode={inputMode}
           value={value}
           onChange={(event) => onChange(event.target.value)}
           onBlur={onBlur}
-          className="h-11 min-w-0 flex-1 appearance-none rounded-md border border-input bg-background px-1 text-center font-mono text-sm tabular-nums outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+          className="h-11 min-w-0 flex-1 px-1 text-center font-mono text-sm tabular-nums"
         />
         <Button
           type="button"

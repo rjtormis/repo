@@ -3,9 +3,14 @@
 import { WorkoutSession } from "@/generated/prisma/client"
 import { prisma } from "@/lib/prisma"
 import { getServerSession } from "@/lib/session"
+import type { WorkoutSessionDetail } from "@/types/session.types"
 
 function toKg(weight: unknown): number | null {
   if (weight == null || weight === "") return null
+  if (typeof weight === "object" && weight !== null && "toNumber" in weight) {
+    const n = (weight as { toNumber: () => number }).toNumber()
+    return Number.isFinite(n) ? n : null
+  }
   const n = typeof weight === "number" ? weight : Number(weight)
   return Number.isFinite(n) ? n : null
 }
@@ -24,6 +29,7 @@ const sessionInclude = {
         select: {
           id: true,
           name: true,
+          muscleGroups: true,
         },
       },
       workoutSets: {
@@ -243,7 +249,34 @@ async function attachReview(
     ),
   }))
 
-  return { ...session, previousByExercise, previousSetsByExercise, volumeTrend }
+  return {
+    id: session.id,
+    name: session.name,
+    startedAt: session.startedAt?.toISOString() ?? null,
+    endedAt: session.endedAt?.toISOString() ?? null,
+    createdAt: session.createdAt.toISOString(),
+    updatedAt: session.updatedAt.toISOString(),
+    userId: session.userId,
+    exercises: session.exercises.map((row) => ({
+      id: row.id,
+      position: row.position,
+      exercise: {
+        id: row.exercise.id,
+        name: row.exercise.name,
+        muscleGroup: row.exercise.muscleGroups,
+      },
+      workoutSets: row.workoutSets.map((set) => ({
+        id: set.id,
+        position: set.position,
+        weight: toKg(set.weight),
+        reps: set.reps,
+        completedAt: set.completedAt ? set.completedAt.toISOString() : null,
+      })),
+    })),
+    previousByExercise,
+    previousSetsByExercise,
+    volumeTrend,
+  } satisfies WorkoutSessionDetail
 }
 
 // ===== GET =====

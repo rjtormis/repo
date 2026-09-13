@@ -463,9 +463,11 @@ function AccountSettings({
             aria-hidden
             onChange={onPhotoChange}
           />
-          <button
+          <Button
             type="button"
-            className="relative shrink-0 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            variant="transparent"
+            size="icon"
+            className="relative size-16 shrink-0 rounded-full"
             aria-label="Change photo"
             disabled={photoBusy}
             onClick={() => fileRef.current?.click()}
@@ -485,7 +487,7 @@ function AccountSettings({
                 <IconCamera className="size-3.5" stroke={1.6} aria-hidden />
               )}
             </span>
-          </button>
+          </Button>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[15px]">{shownName}</p>
             <p className="truncate font-mono text-xs text-muted-foreground">

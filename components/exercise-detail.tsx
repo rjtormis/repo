@@ -393,13 +393,14 @@ function DemoTile({
   onPlay: () => void
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="transparent"
       aria-pressed={pressed}
       onClick={onPlay}
       className={cn(
-        "flex h-14 min-w-0 items-center gap-2.5 rounded-lg bg-surface-1 px-3 text-start text-sm",
-        "hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        "h-14 min-w-0 justify-start gap-2.5 rounded-lg bg-surface-1 px-3 text-start",
+        "hover:bg-surface-2",
         pressed && "bg-surface-2"
       )}
     >
@@ -410,7 +411,7 @@ function DemoTile({
         <IconPlayerPlay className="size-3.5 translate-x-px" stroke={1.5} />
       </span>
       <span className="min-w-0 truncate">{label}</span>
-    </button>
+    </Button>
   )
 }
 

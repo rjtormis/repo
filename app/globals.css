@@ -234,8 +234,8 @@
   .motion-accordion {
     display: grid;
     transition:
-      grid-template-rows 220ms var(--motion-ease-out),
-      opacity 220ms var(--motion-ease-out);
+      grid-template-rows 180ms var(--motion-ease-in-out),
+      opacity 180ms var(--motion-ease-out);
   }
 
   .motion-accordion-open {

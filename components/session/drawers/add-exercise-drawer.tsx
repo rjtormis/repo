@@ -24,6 +24,7 @@ import { useGetExercises } from "@/hooks/tanstack/exrcise"
 import type { CatalogExercise } from "@/types/exercise.types"
 import { cn } from "@/lib/utils"
 import { Spinner } from "@/components/ui/spinner"
+import { Input } from "@/components/ui/input"
 
 const LIST_ID = "add-exercise-list"
 const SHEET_MAX_PX = 32 * 16
@@ -77,8 +78,6 @@ export function AddExerciseDrawer({
   const [selected, setSelected] = useState<Record<string, CatalogExercise>>({})
   const [scrolling, setScrolling] = useState(false)
   const sheetHeight = usePhoneSheetHeight(open)
-
-  console.log(selectedExercises)
 
   useEffect(() => {
     const t = setTimeout(() => setDebounced(query.trim()), 250)
@@ -146,6 +145,7 @@ export function AddExerciseDrawer({
       <SheetContent
         side="bottom"
         showCloseButton={false}
+
         className="mx-auto flex w-full max-w-lg flex-col gap-0 overflow-hidden rounded-t-xl px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] data-[side=bottom]:h-[var(--add-exercise-sheet-h,68svh)] data-[side=bottom]:max-h-[calc(100svh-0.5rem)]"
         style={
           {
@@ -182,8 +182,7 @@ export function AddExerciseDrawer({
             className="pointer-events-none absolute inset-s-3 top-1/2 size-4.5 -translate-y-1/2 text-muted-foreground"
             stroke={1.5}
           />
-          <input
-            autoFocus
+          <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search"
@@ -340,14 +339,15 @@ function ExercisePickRow({
   disabled?: boolean
 }) {
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
       disabled={disabled}
       aria-pressed={selected}
       onClick={onToggle}
       className={cn(
-        "flex min-h-12 w-full min-w-0 items-center gap-3 rounded-md px-2.5 py-2 text-start text-sm",
-        selected || disabled ? "bg-muted" : "hover:bg-muted"
+        "h-auto min-h-12 w-full min-w-0 items-center justify-start gap-3 rounded-md px-2.5 py-2 text-start whitespace-normal",
+        (selected || disabled) && "bg-muted"
       )}
     >
       <span
@@ -378,6 +378,6 @@ function ExercisePickRow({
           aria-hidden
         />
       )}
-    </button>
+    </Button>
   )
 }

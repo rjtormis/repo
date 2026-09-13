@@ -1,5 +1,6 @@
 "use client"
 
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 export function Segmented<T extends string>({
@@ -29,24 +30,23 @@ export function Segmented<T extends string>({
       {options.map((option) => {
         const selected = value === option.value
         return (
-          <button
+          <Button
             key={option.value}
             type="button"
+            variant="transparent"
             role="radio"
             aria-checked={selected}
             disabled={disabled}
             onClick={() => onChange(option.value)}
             className={cn(
-              "min-h-10 min-w-0 flex-1 rounded-[calc(var(--radius)-2px)] px-2 text-sm transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              "h-auto min-h-10 min-w-0 flex-1 rounded-[calc(var(--radius)-2px)] px-2",
               selected
                 ? "bg-surface-2 text-foreground ring-1 ring-border"
-                : "text-muted-foreground hover:text-foreground",
-              disabled && "opacity-50"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             {option.label}
-          </button>
+          </Button>
         )
       })}
     </div>

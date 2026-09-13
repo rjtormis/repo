@@ -180,14 +180,15 @@ export function ShareSheet({
           )}
         >
           {variants.map((item) => (
-            <button
+            <Button
               key={item}
               type="button"
+              variant="transparent"
               data-variant={item}
               aria-pressed={item === selected}
               aria-label={VARIANT_LABEL[item]}
               onClick={() => selectVariant(item)}
-              className="snap-center shrink-0 rounded-2xl text-start focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="h-auto min-h-0 snap-center shrink-0 rounded-2xl p-0 text-start whitespace-normal active:translate-y-0"
             >
               <div
                 className="relative overflow-hidden rounded-2xl bg-[#0A0A0A]"
@@ -217,25 +218,26 @@ export function ShareSheet({
                   {VARIANT_LABEL[item]}
                 </p>
               ) : null}
-            </button>
+            </Button>
           ))}
         </div>
 
         {variants.length > 1 ? (
           <div className="mt-2 flex justify-center gap-1.5" role="tablist" aria-label="Share cards">
             {variants.map((item) => (
-              <button
+              <Button
                 key={item}
                 type="button"
+                variant="transparent"
                 role="tab"
                 aria-selected={item === selected}
                 aria-label={VARIANT_LABEL[item]}
                 onClick={() => selectVariant(item)}
                 className={cn(
-                  "h-1.5 rounded-full transition-[width,background-color] duration-200 ease-[var(--motion-ease-out)]",
+                  "min-h-0 rounded-full p-0 transition-[width,background-color] duration-200 ease-[var(--motion-ease-out)] active:translate-y-0",
                   item === selected
-                    ? "w-4 bg-foreground"
-                    : "w-1.5 bg-muted-foreground/35"
+                    ? "h-1.5 w-4 bg-foreground"
+                    : "size-1.5 bg-muted-foreground/35"
                 )}
               />
             ))}

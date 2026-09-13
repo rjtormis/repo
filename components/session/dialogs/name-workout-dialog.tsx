@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { Input } from "@/components/ui/input"
 
 export function NameWorkoutDialog({
   open,
@@ -39,7 +40,7 @@ export function NameWorkoutDialog({
       onAction={() => onSave(nextName)}
       onCancel={onSkip}
     >
-      <input
+      <Input
         autoFocus
         value={draft}
         onChange={(event) => setDraft(event.target.value)}
@@ -47,7 +48,7 @@ export function NameWorkoutDialog({
           if (event.key === "Enter" && nextName !== "") onSave(nextName)
         }}
         placeholder="e.g. Push day"
-        className="h-11 w-full min-w-0 rounded-md border border-input bg-background px-3 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="h-11"
       />
     </ConfirmDialog>
   )
