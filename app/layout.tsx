@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import Script from "next/script"
 import { Geist_Mono, Inter } from "next/font/google"
-
+import { SITE } from "@/lib/meta-data"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@/lib/utils"
@@ -27,23 +27,52 @@ const fontMono = Geist_Mono({
 
 export const metadata: Metadata = {
   // Name still open — "Repo" is a suggestion only
-  title: "Workout log",
-  description: "Last session under each set. Offline-first. No programs.",
+  metadataBase: new URL(SITE.url),
+  title: {
+    default: `${SITE.name} — ${SITE.tagline}`,
+    template: `%s · ${SITE.name}`,
+  },
+  description: SITE.description,
+  applicationName: SITE.name,
   manifest: "/manifest.webmanifest",
+  keywords: [
+    "gym tracker",
+    "workout log",
+    "lifting log",
+    "progressive overload",
+    "strength training",
+  ],
+  authors: [{ name: SITE.name, url: SITE.url }],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: SITE.name,
+    url: SITE.url,
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: SITE.name }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
+    images: ["/og.png"],
+  },
   icons: {
     icon: [
-      { url: "/icons/icon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.ico", sizes: "32x32" },
+      { url: "/icon.png", type: "image/png", sizes: "192x192" },
       { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
       { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: [
-      { url: "/icons/icon-180x180.png", sizes: "180x180", type: "image/png" },
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
   appleWebApp: {
     capable: true,
+    title: SITE.name,
     statusBarStyle: "black-translucent",
-    title: "Repo",
   },
   formatDetection: {
     telephone: false,
@@ -60,6 +89,7 @@ export const viewport: Viewport = {
     { media: "(prefers-color-scheme: light)", color: "#ffffff" },
   ],
 }
+
 export default async function RootLayout({
   children,
 }: Readonly<{

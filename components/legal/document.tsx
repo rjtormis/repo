@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 
 const LINKS = [
   { href: "/privacy", label: "Privacy", id: "privacy" as const },
-  { href: "/terms-and-condition", label: "Terms", id: "terms" as const },
+  { href: "/terms", label: "Terms", id: "terms" as const },
 ]
 
 export function LegalDocument({
@@ -94,7 +94,7 @@ export function LegalDocument({
             {" · "}
             {current === "privacy" ? (
               <Link
-                href="/terms-and-condition"
+                href="/terms"
                 className="underline-offset-4 hover:text-foreground hover:underline"
               >
                 Terms of Service

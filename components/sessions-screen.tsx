@@ -51,7 +51,7 @@ export function SessionsScreen() {
             return (
               <li key={session.id}>
                 <Link
-                  href={`/dashboard/session/${session.id}`}
+                  href={`/session/${session.id}`}
                   className={cn(
                     "flex min-h-11 flex-col gap-1 rounded-xl bg-surface-1 px-3.5 py-3.5 transition-colors",
                     "hover:bg-surface-2 focus-visible:bg-surface-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"

@@ -15,33 +15,38 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: "/exercises",
-        destination: "/dashboard/exercises",
+        source: "/dashboard/exercises",
+        destination: "/exercises",
         permanent: true,
       },
       {
-        source: "/exercises/:id",
-        destination: "/dashboard/exercises/:id",
+        source: "/dashboard/exercises/:id",
+        destination: "/exercises/:id",
         permanent: true,
       },
       {
-        source: "/sessions",
-        destination: "/dashboard/sessions",
+        source: "/dashboard/sessions",
+        destination: "/sessions",
         permanent: true,
       },
       {
-        source: "/session/:id",
-        destination: "/dashboard/session/:id",
+        source: "/dashboard/session/:id",
+        destination: "/session/:id",
         permanent: true,
       },
       {
-        source: "/leaderboard",
-        destination: "/dashboard/leaderboard",
+        source: "/dashboard/leaderboard",
+        destination: "/leaderboard",
         permanent: true,
       },
       {
-        source: "/settings",
-        destination: "/dashboard/settings",
+        source: "/dashboard/settings",
+        destination: "/settings",
+        permanent: true,
+      },
+      {
+        source: "/terms-and-condition",
+        destination: "/terms",
         permanent: true,
       },
     ]

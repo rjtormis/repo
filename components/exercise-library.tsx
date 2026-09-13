@@ -174,7 +174,7 @@ function FilterChip({
 function ExerciseRow({ item }: { item: CatalogExercise }) {
   return (
     <Link
-      href={`/dashboard/exercises/${item.id}`}
+      href={`/exercises/${item.id}`}
       className="flex min-h-12 min-w-0 w-full items-center gap-3 rounded-md px-2 text-start text-sm hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
       <span

@@ -6,6 +6,7 @@ const publicPaths = [
   "/login",
   "/sign-up",
   "/privacy",
+  "/terms",
   "/terms-and-condition",
   "/manifest.webmanifest",
   "/sw.js",

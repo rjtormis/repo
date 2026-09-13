@@ -107,13 +107,13 @@ export default function HomeScreen() {
 
   function resumeWorkout() {
     if (!activeSession) return
-    router.push(`/dashboard/session/${activeSession.id}`)
+    router.push(`/session/${activeSession.id}`)
   }
 
   function onCellClick(cell: HeatmapCell) {
     if (cell.value <= 0 || cell.disabled || cell.future) return
     const ids = ["ses-1", "ses-2", "ses-3"] as const
-    router.push(`/dashboard/session/${ids[cell.date.getDate() % ids.length]}`)
+    router.push(`/session/${ids[cell.date.getDate() % ids.length]}`)
   }
 
   const cta = activeSession ? (
@@ -135,7 +135,7 @@ export default function HomeScreen() {
       className="h-12 min-h-11 w-full text-base"
       onClick={async () => {
         const result = await mutateAsync()
-        router.push(`/dashboard/session/${result.id}`)
+        router.push(`/session/${result.id}`)
       }}
       disabled={isPending}
       aria-disabled={isPending}

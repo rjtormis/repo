@@ -290,7 +290,7 @@ export function SignUpScreen() {
                 </Link>
                 {" · "}
                 <Link
-                  href="/terms-and-condition"
+                  href="/terms"
                   className="underline-offset-4 hover:text-foreground hover:underline"
                 >
                   Terms

@@ -265,9 +265,9 @@ export const getExerciseDetail = async (id: string) => {
   candidates.sort(compareLifts)
   const best = candidates[0] ?? null
   const previous = best
-    ? candidates
+    ? (candidates
         .filter((lift) => lift.achievedAt < best.achievedAt)
-        .sort(compareLifts)[0] ?? null
+        .sort(compareLifts)[0] ?? null)
     : null
 
   const record: ExerciseRecord | null = best ? { ...best, previous } : null

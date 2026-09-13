@@ -5,10 +5,12 @@ import {
   LegalMail,
   LegalSection,
 } from "@/components/legal/document"
+import { SITE } from "@/lib/meta-data"
 
 export const metadata: Metadata = {
-  title: "Terms of Service · Repo",
-  description: "The rules for using Repo.",
+  title: "Terms of Service",
+  description: `The rules for using ${SITE.name}.`,
+  alternates: { canonical: "/terms" },
 }
 
 const UPDATED = "12 September 2026"

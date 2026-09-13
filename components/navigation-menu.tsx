@@ -31,20 +31,17 @@ const rowClassName =
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: IconHome },
-  { href: "/dashboard/exercises", label: "Exercises", icon: IconBarbell },
-  { href: "/dashboard/sessions", label: "Sessions", icon: IconHistory },
-  { href: "/dashboard/leaderboard", label: "Leaderboard", icon: IconChartBar },
+  { href: "/exercises", label: "Exercises", icon: IconBarbell },
+  { href: "/sessions", label: "Sessions", icon: IconHistory },
+  { href: "/leaderboard", label: "Leaderboard", icon: IconChartBar },
 ] as const
 
 function pathIsActive(pathname: string, href: string) {
   if (href === "/dashboard") {
     return pathname === "/dashboard"
   }
-  if (href === "/dashboard/sessions") {
-    return (
-      pathname === "/dashboard/sessions" ||
-      pathname.startsWith("/dashboard/session/")
-    )
+  if (href === "/sessions") {
+    return pathname === "/sessions" || pathname.startsWith("/session/")
   }
   return pathname === href || pathname.startsWith(`${href}/`)
 }
@@ -203,13 +200,13 @@ export function NavigationMenu() {
           <div className="my-2 border-t border-border" aria-hidden />
 
           <Link
-            href="/dashboard/settings"
+            href="/settings"
             aria-current={
-              pathIsActive(pathname, "/dashboard/settings") ? "page" : undefined
+              pathIsActive(pathname, "/settings") ? "page" : undefined
             }
             className={cn(
               rowClassName,
-              pathIsActive(pathname, "/dashboard/settings") && "bg-muted"
+              pathIsActive(pathname, "/settings") && "bg-muted"
             )}
             onClick={() => setOpen(false)}
           >
