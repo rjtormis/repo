@@ -34,6 +34,7 @@ import {
 import { ShareSheet } from "@/components/session/share/share-sheet"
 import { VolumeTrend } from "@/components/session/volume-trend"
 import { SessionStats } from "@/components/session/stats-row"
+import { useGetDashboardStats } from "@/hooks/tanstack/dashboard"
 import {
   useAddExercisesToSession,
   useGetSpecificSession,
@@ -90,6 +91,8 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
   const { weightUnit } = useUserPrefs()
   const { data: auth } = authClient.useSession()
   const { data, isPending, isError } = useGetSpecificSession(sessionId)
+  const today = new Date().toLocaleDateString("en-CA")
+  const { data: dash } = useGetDashboardStats(today)
   const { mutateAsync } = useRenameSession(sessionId)
   const { mutateAsync: updateSessionStart, isPending: sessionStartPending } =
     useUpdateWorkoutStartedAt(sessionId)
@@ -340,6 +343,9 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
         onOpenChange={setShareOpen}
         data={buildShareCardData(data, weightUnit, {
           handle: shareHandle(auth?.user.name, auth?.user.email),
+          heatmap: dash?.heatmap,
+          streakCount: dash?.streak.count,
+          streakUnit: dash?.streak.unit,
         })}
       />
       <AddExerciseDrawer

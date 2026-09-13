@@ -1,5 +1,12 @@
+import { MONTHS } from "@/components/session/constants"
 import { completedSets, sessionSetCount, sessionVolume, weightKg } from "@/components/session/lib"
-import type { ShareCardData, ShareCardExtras, ShareCardRecord } from "@/components/session/share/types"
+import {
+  SHARE_VARIANTS,
+  type ShareCardData,
+  type ShareCardExtras,
+  type ShareCardRecord,
+  type ShareVariant,
+} from "@/components/session/share/types"
 import { formatWeight, type WeightUnit } from "@/lib/units"
 import type { HeatmapDatum } from "@/types/dashboard.types"
 import type { WorkoutSessionDetail } from "@/types/session.types"
@@ -7,6 +14,19 @@ import type { WorkoutSessionDetail } from "@/types/session.types"
 const SHARE_WEEKS = 26
 const SHARE_DAYS = 7
 const SHARE_CELLS = SHARE_WEEKS * SHARE_DAYS
+
+export function parseShareVariant(value: string | null): ShareVariant | null {
+  if (value == null || value === "") return "session"
+  return SHARE_VARIANTS.includes(value as ShareVariant)
+    ? (value as ShareVariant)
+    : null
+}
+
+export function availableShareVariants(data: ShareCardData): ShareVariant[] {
+  const variants: ShareVariant[] = ["session"]
+  if (data.record) variants.push("pr")
+  return variants
+}
 
 export function shareHandle(name?: string | null, email?: string | null) {
   const raw =
@@ -30,15 +50,24 @@ export function buildShareCardData(
     durationLabel: formatShareDuration(start, end),
     exerciseCount: session.exercises.length,
     setCount: sessionSetCount(session),
-    volumeLabel: formatWeight(sessionVolume(session), unit, { unit: false }),
+    volumeAmount: formatWeight(sessionVolume(session), unit, { unit: false }),
+    volumeUnit: unit,
     record: sessionRecord(session, unit),
     heatmap: heatmapLevels(extras.heatmap, start),
     monthsLabel: "Last 6 months",
-    streakLabel: extras.streakCount
-      ? `${extras.streakCount} ${extras.streakUnit === "day" ? "day" : "week"} streak`
-      : null,
+    streakCount:
+      extras.streakCount && extras.streakCount > 0 ? extras.streakCount : null,
+    streakUnit:
+      extras.streakCount && extras.streakCount > 0
+        ? (extras.streakUnit ?? "week")
+        : null,
     handle: extras.handle ?? null,
   }
+}
+
+function formatShortDate(date: Date) {
+  if (Number.isNaN(date.getTime())) return null
+  return `${MONTHS[date.getMonth()]} ${date.getDate()}`
 }
 
 function formatShareDate(date: Date) {
@@ -86,6 +115,17 @@ function sessionRecord(
       best = {
         exerciseName: row.exercise.name,
         detail: `${formatWeight(kg, unit)} × ${setLog.reps}`,
+        weightAmount: formatWeight(kg, unit, { unit: false }),
+        weightUnit: unit,
+        reps: setLog.reps,
+        previous: {
+          amount: formatWeight(previous.weightKg, unit, { unit: false }),
+          unit,
+          reps: previous.reps,
+          dateLabel: previous.achievedAt
+            ? formatShortDate(new Date(previous.achievedAt))
+            : null,
+        },
       }
     }
   }

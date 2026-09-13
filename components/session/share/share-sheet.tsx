@@ -2,8 +2,14 @@
 
 import { useEffect, useRef, useState } from "react"
 import { IconCheck, IconCopy, IconDownload, IconShare2 } from "@tabler/icons-react"
+import { availableShareVariants } from "@/components/session/share/build-share-card"
 import { ShareCard } from "@/components/session/share/share-card"
-import type { ShareCardData } from "@/components/session/share/types"
+import {
+  SHARE_STORY_HEIGHT,
+  SHARE_STORY_WIDTH,
+  type ShareCardData,
+  type ShareVariant,
+} from "@/components/session/share/types"
 import { Button } from "@/components/ui/button"
 import {
   Sheet,
@@ -19,6 +25,13 @@ import {
   downloadPng,
   sharePngFile,
 } from "@/lib/share-image"
+import { cn } from "@/lib/utils"
+
+const PREVIEW_WIDTH = 240
+const VARIANT_LABEL: Record<ShareVariant, string> = {
+  session: "Session",
+  pr: "Personal record",
+}
 
 export function ShareSheet({
   open,
@@ -29,20 +42,79 @@ export function ShareSheet({
   onOpenChange: (open: boolean) => void
   data: ShareCardData
 }) {
-  const cardRef = useRef<HTMLDivElement>(null)
+  const variants = availableShareVariants(data)
+  const [variant, setVariant] = useState<ShareVariant>("session")
+  const cardRefs = useRef<Partial<Record<ShareVariant, HTMLDivElement | null>>>(
+    {}
+  )
+  const scrollerRef = useRef<HTMLDivElement>(null)
   const [busy, setBusy] = useState<"share" | "save" | "copy" | null>(null)
   const [copied, setCopied] = useState(false)
   const [fileShare, setFileShare] = useState(false)
-  const filename = `${slug(data.name)}-repo.png`
+  const selected = variants.includes(variant) ? variant : "session"
+  const record = data.record
+  const filename =
+    selected === "pr" && record
+      ? `${slug(record.exerciseName)}-pr-repo.png`
+      : `${slug(data.name)}-repo.png`
   const profileUrl = `https://repo.fit/u/${data.handle ?? "you"}`
-  const caption = `${data.name} · ${data.volumeLabel}`
+  const caption =
+    selected === "pr" && record
+      ? `${record.exerciseName} · ${record.weightAmount} ${record.weightUnit} × ${record.reps}`
+      : `${data.name} · ${data.volumeAmount} ${data.volumeUnit}`
 
   useEffect(() => {
     setFileShare(canShareFiles())
   }, [])
 
+  useEffect(() => {
+    if (!open) return
+    setVariant("session")
+  }, [open])
+
+  useEffect(() => {
+    const node = scrollerRef.current
+    if (!open || !node) return
+    const child = node.querySelector<HTMLElement>(`[data-variant="${selected}"]`)
+    child?.scrollIntoView({
+      inline: "center",
+      block: "nearest",
+      behavior: "auto",
+    })
+  }, [open, selected, variants.length])
+
+  function onScroll() {
+    const node = scrollerRef.current
+    if (!node) return
+    const mid = node.getBoundingClientRect().left + node.clientWidth / 2
+    let closest: ShareVariant = variants[0] ?? "session"
+    let best = Infinity
+    for (const child of node.querySelectorAll<HTMLElement>("[data-variant]")) {
+      const box = child.getBoundingClientRect()
+      const center = box.left + box.width / 2
+      const dist = Math.abs(center - mid)
+      if (dist < best) {
+        best = dist
+        closest = child.dataset.variant as ShareVariant
+      }
+    }
+    setVariant(closest)
+  }
+
+  function selectVariant(next: ShareVariant) {
+    setVariant(next)
+    const child = scrollerRef.current?.querySelector<HTMLElement>(
+      `[data-variant="${next}"]`
+    )
+    child?.scrollIntoView({
+      inline: "center",
+      block: "nearest",
+      behavior: "smooth",
+    })
+  }
+
   async function onShare() {
-    const node = cardRef.current
+    const node = cardRefs.current[selected]
     if (!node) return
     setBusy("share")
     try {
@@ -58,7 +130,7 @@ export function ShareSheet({
   }
 
   async function onSave() {
-    const node = cardRef.current
+    const node = cardRefs.current[selected]
     if (!node) return
     setBusy("save")
     try {
@@ -94,13 +166,81 @@ export function ShareSheet({
         <SheetHeader className="mb-3 p-0 text-start">
           <SheetTitle className="text-base">Share workout</SheetTitle>
           <SheetDescription className="sr-only">
-            Preview the card, then share or save an image.
+            Swipe to pick a card, then share or save an image.
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex justify-center overflow-x-auto rounded-2xl bg-[#0a0a0a]">
-          <ShareCard data={data} cardRef={cardRef} />
+        <div
+          ref={scrollerRef}
+          onScroll={onScroll}
+          className={cn(
+            "-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1",
+            "[scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            variants.length === 1 && "justify-center"
+          )}
+        >
+          {variants.map((item) => (
+            <button
+              key={item}
+              type="button"
+              data-variant={item}
+              aria-pressed={item === selected}
+              aria-label={VARIANT_LABEL[item]}
+              onClick={() => selectVariant(item)}
+              className="snap-center shrink-0 rounded-2xl text-start focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              <div
+                className="relative overflow-hidden rounded-2xl bg-[#0A0A0A]"
+                style={{
+                  width: PREVIEW_WIDTH,
+                  height:
+                    PREVIEW_WIDTH * (SHARE_STORY_HEIGHT / SHARE_STORY_WIDTH),
+                }}
+              >
+                <div
+                  className="origin-top-left"
+                  style={{
+                    transform: `scale(${PREVIEW_WIDTH / SHARE_STORY_WIDTH})`,
+                  }}
+                >
+                  <ShareCard
+                    data={data}
+                    variant={item}
+                    cardRef={(node) => {
+                      cardRefs.current[item] = node
+                    }}
+                  />
+                </div>
+              </div>
+              {variants.length > 1 ? (
+                <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                  {VARIANT_LABEL[item]}
+                </p>
+              ) : null}
+            </button>
+          ))}
         </div>
+
+        {variants.length > 1 ? (
+          <div className="mt-2 flex justify-center gap-1.5" role="tablist" aria-label="Share cards">
+            {variants.map((item) => (
+              <button
+                key={item}
+                type="button"
+                role="tab"
+                aria-selected={item === selected}
+                aria-label={VARIANT_LABEL[item]}
+                onClick={() => selectVariant(item)}
+                className={cn(
+                  "h-1.5 rounded-full transition-[width,background-color] duration-200 ease-[var(--motion-ease-out)]",
+                  item === selected
+                    ? "w-4 bg-foreground"
+                    : "w-1.5 bg-muted-foreground/35"
+                )}
+              />
+            ))}
+          </div>
+        ) : null}
 
         <div className="mt-4 grid grid-cols-2 gap-2">
           <Button

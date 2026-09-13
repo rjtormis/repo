@@ -19,6 +19,7 @@ export type SessionExerciseRow = {
 
 export type ExercisePrevious = {
   weightKg: number
+  reps: number
   achievedAt: string
 }
 
