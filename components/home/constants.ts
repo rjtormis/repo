@@ -3,6 +3,8 @@ import type { CSSProperties } from "react"
 export const TARGET_DAYS = 183
 export const MIN_DAYS = 90
 export const CELL_GAP = 3
+/** Weekday axis column. Keep in lockstep with `heatmap-calendar` `w-7.5`. */
+export const WEEKDAY_COL = 30
 export const MIN_CELL = 8
 export const MAX_CELL = 16
 export const WEEK_STARTS_ON = 0 as const

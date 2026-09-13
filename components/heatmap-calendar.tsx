@@ -654,128 +654,156 @@ export function HeatmapCalendar({
                 axisCfg.className
               )}
             >
-              {showAxis && showMonths ? (
-                fillWidth ? (
-                  <div className="mb-1 flex w-full">
-                    {showWeekdays ? (
-                      <div
-                        className="me-1.5 shrink-0"
-                        style={{ width: 30 }}
-                        aria-hidden
-                      />
-                    ) : null}
-                    <div
-                      className="grid min-w-0 flex-1"
-                      style={{
-                        gap: `${cellGap}px`,
-                        gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))`,
-                      }}
-                    >
-                      {monthLabels.map((label, index) => {
+              {fillWidth ? (
+                <div
+                  className="grid w-full"
+                  style={{
+                    columnGap: `${cellGap}px`,
+                    rowGap: `${cellGap}px`,
+                    gridTemplateColumns:
+                      showAxis && showWeekdays
+                        ? `1.875rem repeat(${columns.length}, minmax(0, 1fr))`
+                        : `repeat(${columns.length}, minmax(0, 1fr))`,
+                  }}
+                  role="grid"
+                  aria-label="Heatmap calendar"
+                >
+                  {showAxis && showMonths
+                    ? monthLabels.map((label, index) => {
                         const nextLabel = monthLabels[index + 1]
-                        const endColumn = nextLabel?.colIndex ?? columns.length
+                        const endColumn =
+                          nextLabel?.colIndex ?? columns.length
+                        const colOffset =
+                          showAxis && showWeekdays ? 2 : 1
                         return (
                           <div
                             key={`${label.colIndex}-${label.text}`}
-                            className="min-w-0 overflow-hidden text-start text-xs leading-none whitespace-nowrap text-muted-foreground"
+                            className="min-w-0 overflow-hidden pb-0.5 text-start text-xs leading-none whitespace-nowrap text-muted-foreground"
                             style={{
-                              gridColumn: `${label.colIndex + 1} / ${
-                                endColumn + 1
+                              gridRow: 1,
+                              gridColumn: `${label.colIndex + colOffset} / ${
+                                endColumn + colOffset
                               }`,
                             }}
                           >
                             {label.text}
                           </div>
                         )
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    className="flex items-end"
-                    style={{ paddingLeft: weekdayLabelWidth }}
-                  >
-                    <div
-                      className="relative mb-1"
-                      style={{
-                        height: 16,
-                        width: columns.length * (cellSize + cellGap) - cellGap,
-                      }}
-                    >
-                      {monthLabels.map((m) => (
+                      })
+                    : null}
+
+                  {showAxis && showWeekdays
+                    ? Array.from({ length: 7 }).map((_, rowIdx) => (
                         <div
-                          key={m.colIndex}
-                          className="absolute text-xs whitespace-nowrap text-muted-foreground"
+                          key={`weekday-${rowIdx}`}
+                          className="flex items-center justify-end overflow-hidden text-[10px] leading-none whitespace-nowrap text-muted-foreground"
                           style={{
-                            left: m.colIndex * (cellSize + cellGap),
-                            top: 0,
+                            gridColumn: 1,
+                            gridRow:
+                              (showAxis && showMonths ? 2 : 1) + rowIdx,
                           }}
+                          aria-hidden
                         >
-                          {m.text}
+                          {weekdayIndices.includes(rowIdx)
+                            ? weekdayLabelForIndex(rowIdx, weekStartsOn)
+                            : null}
+                        </div>
+                      ))
+                    : null}
+
+                  {columns.map((col, i) =>
+                    col.map((cell, rowIdx) => (
+                      <div
+                        key={`${cell.key}-${i}`}
+                        className="min-w-0"
+                        style={{
+                          gridColumn:
+                            (showAxis && showWeekdays ? 2 : 1) + i,
+                          gridRow:
+                            (showAxis && showMonths ? 2 : 1) + rowIdx,
+                        }}
+                      >
+                        {cellButton(cell, i)}
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : (
+                <>
+                  {showAxis && showMonths ? (
+                    <div
+                      className="flex items-end"
+                      style={{ paddingLeft: weekdayLabelWidth }}
+                    >
+                      <div
+                        className="relative mb-1"
+                        style={{
+                          height: 16,
+                          width:
+                            columns.length * (cellSize + cellGap) - cellGap,
+                        }}
+                      >
+                        {monthLabels.map((m) => (
+                          <div
+                            key={m.colIndex}
+                            className="absolute text-xs whitespace-nowrap text-muted-foreground"
+                            style={{
+                              left: m.colIndex * (cellSize + cellGap),
+                              top: 0,
+                            }}
+                          >
+                            {m.text}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <div className="flex max-w-full">
+                    {showAxis && showWeekdays ? (
+                      <div
+                        className="me-1.5 flex w-7.5 shrink-0 flex-col"
+                        style={{ gap: `${cellGap}px` }}
+                        aria-hidden="true"
+                      >
+                        {Array.from({ length: 7 }).map((_, rowIdx) => (
+                          <div
+                            key={rowIdx}
+                            className="flex items-center justify-end overflow-hidden text-[10px] leading-none whitespace-nowrap text-muted-foreground"
+                            style={{ height: cellSize }}
+                          >
+                            {weekdayIndices.includes(rowIdx)
+                              ? weekdayLabelForIndex(rowIdx, weekStartsOn)
+                              : ""}
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
+
+                    <div
+                      className="flex shrink-0"
+                      style={{ gap: `${cellGap}px` }}
+                      role="grid"
+                      aria-label="Heatmap calendar"
+                    >
+                      {columns.map((col, i) => (
+                        <div
+                          key={i}
+                          className="grid shrink-0"
+                          style={{
+                            gap: `${cellGap}px`,
+                            gridTemplateRows: `repeat(7, ${cellSize}px)`,
+                            width: cellSize,
+                          }}
+                          role="rowgroup"
+                        >
+                          {col.map((cell) => cellButton(cell, i))}
                         </div>
                       ))}
                     </div>
                   </div>
-                )
-              ) : null}
-
-              <div className={cn("flex", fillWidth ? "w-full" : "max-w-full")}>
-                {showAxis && showWeekdays ? (
-                  <div
-                    className="me-1.5 flex w-7.5 shrink-0 flex-col"
-                    style={{ gap: `${cellGap}px` }}
-                    aria-hidden="true"
-                  >
-                    {Array.from({ length: 7 }).map((_, rowIdx) => (
-                      <div
-                        key={rowIdx}
-                        className={cn(
-                          "flex items-center justify-end overflow-hidden text-[10px] leading-none text-muted-foreground",
-                          fillWidth ? "min-h-0 flex-1" : undefined
-                        )}
-                        style={fillWidth ? undefined : { height: cellSize }}
-                      >
-                        {weekdayIndices.includes(rowIdx)
-                          ? weekdayLabelForIndex(rowIdx, weekStartsOn)
-                          : ""}
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-
-                <div
-                  className={cn(
-                    "flex",
-                    fillWidth ? "min-w-0 flex-1" : "shrink-0"
-                  )}
-                  style={{ gap: `${cellGap}px` }}
-                  role="grid"
-                  aria-label="Heatmap calendar"
-                >
-                  {columns.map((col, i) => (
-                    <div
-                      key={i}
-                      className={cn(
-                        fillWidth
-                          ? "flex min-w-0 flex-1 flex-col"
-                          : "grid shrink-0"
-                      )}
-                      style={
-                        fillWidth
-                          ? { gap: `${cellGap}px` }
-                          : {
-                              gap: `${cellGap}px`,
-                              gridTemplateRows: `repeat(7, ${cellSize}px)`,
-                              width: cellSize,
-                            }
-                      }
-                      role="rowgroup"
-                    >
-                      {col.map((cell) => cellButton(cell, i))}
-                    </div>
-                  ))}
-                </div>
-              </div>
+                </>
+              )}
             </div>
 
             {showLegend || renderLegend ? (

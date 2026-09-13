@@ -5,6 +5,7 @@ import {
   MIN_CELL,
   MIN_DAYS,
   TARGET_DAYS,
+  WEEKDAY_COL,
   WEEK_STARTS_ON,
 } from "@/components/home/constants"
 import type { SessionCard } from "@/components/home/types"
@@ -38,7 +39,8 @@ export function fitHeatmap(
 
   while (rangeDays > MIN_DAYS) {
     const weeks = Math.max(1, weeksFor(rangeDays))
-    const cell = (widthPx - (weeks - 1) * CELL_GAP) / weeks
+    const usable = widthPx - WEEKDAY_COL - CELL_GAP
+    const cell = (usable - (weeks - 1) * CELL_GAP) / weeks
     if (cell >= MIN_CELL) {
       return {
         rangeDays,
@@ -49,7 +51,8 @@ export function fitHeatmap(
   }
 
   const weeks = Math.max(1, weeksFor(rangeDays))
-  const cell = (widthPx - (weeks - 1) * CELL_GAP) / weeks
+  const usable = widthPx - WEEKDAY_COL - CELL_GAP
+  const cell = (usable - (weeks - 1) * CELL_GAP) / weeks
   return {
     rangeDays,
     cellSize: Math.min(MAX_CELL, Math.max(MIN_CELL, Math.round(cell))),

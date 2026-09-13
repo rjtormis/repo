@@ -55,7 +55,8 @@ export function TrainingHeatmap({
               axisLabels={{
                 showWeekdays: true,
                 showMonths: true,
-                weekdayIndices: [0, 1, 2, 3, 4, 5, 6],
+                weekdayIndices:
+                  weekStartsOn === 1 ? [0, 1, 2, 3, 4] : [1, 2, 3, 4, 5],
               }}
               legend={false}
               levelClassNames={HEAT_LEVELS}
