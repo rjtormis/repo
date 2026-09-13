@@ -12,6 +12,8 @@ const publicPaths = [
   "/icon.png",
   "/apple-icon.png",
   "/apple-touch-icon.png",
+  "/sitemap.xml",
+  "/robots.txt",
 ]
 
 export function proxy(request: NextRequest) {
@@ -32,6 +34,6 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|manifest\\.webmanifest|sw\\.js|icons/|.*\\..*).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|manifest\\.webmanifest|sw\\.js|sitemap\\.xml|robots\\.txt|icons/|.*\\..*).*)",
   ],
 }
