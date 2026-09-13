@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { IconChevronLeft, IconDotsVertical } from "@tabler/icons-react"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,13 +32,14 @@ export function SessionHeader({
   return (
     <header>
       <div className="flex min-w-0 items-center gap-1">
-        <Link
-          href="/dashboard"
+        <Button
+          variant="quiet"
+          size="icon-touch"
+          render={<Link href="/dashboard" />}
           aria-label="Back"
-          className="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <IconChevronLeft className="size-5.5 rtl:rotate-180" stroke={1.5} />
-        </Link>
+        </Button>
 
         <div className="min-w-0 flex-1 pt-2">
           <h1 className="truncate text-lg font-medium">{name}</h1>
@@ -49,10 +51,10 @@ export function SessionHeader({
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
-              <button
-                type="button"
+              <Button
+                variant="quiet"
+                size="icon-touch"
                 aria-label="Session options"
-                className="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
               />
             }
           >

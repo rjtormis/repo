@@ -127,9 +127,8 @@ function AccountFooter({ onClose }: { onClose: () => void }) {
       </span>
       <Button
         type="button"
-        variant="ghost"
-        size="icon"
-        className="size-11 shrink-0 text-muted-foreground"
+        variant="quiet"
+        size="icon-touch"
         disabled={signingOut}
         aria-label="Log out"
         onClick={signOut}
@@ -156,11 +155,7 @@ export function NavigationMenu() {
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
         render={
-          <button
-            type="button"
-            aria-label="Open menu"
-            className="inline-flex size-11 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:bg-muted/80"
-          />
+          <Button variant="quiet" size="icon-touch" aria-label="Open menu" />
         }
       >
         <IconMenu2 className="size-5.5" stroke={1.5} />

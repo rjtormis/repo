@@ -7,15 +7,7 @@ import { IconCamera, IconLoader2, IconMinus, IconPlus } from "@tabler/icons-reac
 import { useTheme } from "next-themes"
 import { Controller, useForm } from "react-hook-form"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+import { DeleteAccountDialog } from "@/components/settings/dialogs/delete-account-dialog"
 import { Button } from "@/components/ui/button"
 import {
   Field,
@@ -33,10 +25,8 @@ import { updateUserPrefs, useUserPrefs } from "@/lib/user-prefs"
 import { cn } from "@/lib/utils"
 import {
   changePasswordSchema,
-  deleteAccountSchema,
   updateNameSchema,
   type ChangePasswordValues,
-  type DeleteAccountValues,
   type UpdateNameValues,
 } from "@/schema/auth-schema"
 
@@ -280,8 +270,7 @@ function LoggingPrefs() {
           <Button
             type="button"
             variant="outline"
-            size="icon"
-            className="size-11"
+            size="icon-touch"
             aria-label="Decrease weekly target"
             disabled={prefs.isPending || weeklyTarget <= 1 || saving === "target"}
             onClick={() =>
@@ -296,8 +285,7 @@ function LoggingPrefs() {
           <Button
             type="button"
             variant="outline"
-            size="icon"
-            className="size-11"
+            size="icon-touch"
             aria-label="Increase weekly target"
             disabled={prefs.isPending || weeklyTarget >= 7 || saving === "target"}
             onClick={() =>
@@ -325,8 +313,6 @@ function AccountSettings({
   const currentPasswordId = useId()
   const newPasswordId = useId()
   const confirmPasswordId = useId()
-  const deleteEmailId = useId()
-  const deletePasswordId = useId()
   const fileRef = useRef<HTMLInputElement>(null)
 
   const { data: session, isPending } = authClient.useSession()
@@ -349,11 +335,6 @@ function AccountSettings({
       confirmPassword: "",
     },
   })
-  const deleteForm = useForm<DeleteAccountValues>({
-    resolver: zodResolver(deleteAccountSchema),
-    defaultValues: { confirmEmail: "", password: "" },
-  })
-
   const savedName = user?.name ?? ""
   const savedImage = user?.image ?? null
 
@@ -437,106 +418,16 @@ function AccountSettings({
     setChangingPassword(false)
   }
 
-  async function onDeleteAccount(values: DeleteAccountValues) {
-    if (values.confirmEmail.trim().toLowerCase() !== email.toLowerCase()) {
-      deleteForm.setError("confirmEmail", {
-        type: "validate",
-        message: "Type your email exactly.",
-      })
-      return
-    }
-
-    const { error } = await authClient.deleteUser({
-      password: values.password,
-    })
-    if (error) {
-      const message =
-        error.code === "INVALID_PASSWORD"
-          ? "Password is wrong."
-          : "Couldn’t delete this account. Try again."
-      deleteForm.setError("password", {
-        type: "server",
-        message,
-      })
-      return
-    }
-    onDeleteOpenChange(false)
-    router.replace("/")
-    router.refresh()
-  }
-
   const deleteDialog = (
-    <AlertDialog
+    <DeleteAccountDialog
       open={deleteOpen}
-      onOpenChange={(open) => {
-        onDeleteOpenChange(open)
-        if (!open) deleteForm.reset()
+      onOpenChange={onDeleteOpenChange}
+      expectedEmail={email}
+      onDeleted={() => {
+        router.replace("/")
+        router.refresh()
       }}
-    >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Delete this account?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Your sessions, exercises, and this sign-in go with it. Logs live on
-            the account — this device will not keep a copy. Type your email and
-            password to confirm.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <form
-          onSubmit={deleteForm.handleSubmit(onDeleteAccount)}
-          noValidate
-          className="grid gap-4"
-        >
-          <Field data-invalid={!!deleteForm.formState.errors.confirmEmail}>
-            <FieldLabel htmlFor={deleteEmailId}>Type your email</FieldLabel>
-            <Controller
-              name="confirmEmail"
-              control={deleteForm.control}
-              render={({ field }) => (
-                <Input
-                  {...field}
-                  id={deleteEmailId}
-                  type="email"
-                  autoComplete="off"
-                  inputMode="email"
-                  className="min-h-11"
-                  aria-invalid={!!deleteForm.formState.errors.confirmEmail}
-                />
-              )}
-            />
-            <FieldError errors={[deleteForm.formState.errors.confirmEmail]} />
-          </Field>
-          <Field data-invalid={!!deleteForm.formState.errors.password}>
-            <FieldLabel htmlFor={deletePasswordId}>Password</FieldLabel>
-            <Controller
-              name="password"
-              control={deleteForm.control}
-              render={({ field }) => (
-                <Input
-                  {...field}
-                  id={deletePasswordId}
-                  type="password"
-                  autoComplete="current-password"
-                  className="min-h-11"
-                  aria-invalid={!!deleteForm.formState.errors.password}
-                />
-              )}
-            />
-            <FieldError errors={[deleteForm.formState.errors.password]} />
-          </Field>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <Button
-              type="submit"
-              variant="destructive"
-              disabled={deleteForm.formState.isSubmitting}
-            >
-              {deleteForm.formState.isSubmitting ? "Deleting…" : "Delete"}
-            </Button>
-          </AlertDialogFooter>
-        </form>
-      </AlertDialogContent>
-    </AlertDialog>
+    />
   )
 
   if (isPending) {

@@ -8,6 +8,7 @@ import {
   deleteSpecificSession,
   deleteWorkoutExercise,
   deleteWorkoutSet,
+  restoreWorkoutExercise,
   updateSpecificSessionName,
   updateWorkingWeight,
   updateWorkoutSessionStart,
@@ -214,6 +215,23 @@ export const useDeleteWorkoutSet = (sessionId: string) => {
   return useMutation({
     mutationFn: ({ setId }: { setId: string }) =>
       deleteWorkoutSet({ sessionId, setId }),
+    onSuccess: (next) => {
+      if (next) qc.setQueryData(["sessions", sessionId], next)
+      qc.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+  })
+}
+
+export const useRestoreWorkoutExercise = (sessionId: string) => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({
+      exerciseId,
+      sets,
+    }: {
+      exerciseId: string
+      sets: { weightKg: number | null; reps: number; completed: boolean }[]
+    }) => restoreWorkoutExercise({ sessionId, exerciseId, sets }),
     onSuccess: (next) => {
       if (next) qc.setQueryData(["sessions", sessionId], next)
       qc.invalidateQueries({ queryKey: ["dashboard"] })

@@ -86,17 +86,18 @@ export function PwaInstallPrompt() {
           <p className="min-w-0 flex-1 text-sm">
             Open this link in Safari, tap Share, then Add to Home Screen.
           </p>
-          <button
-            type="button"
+          <Button
+            variant="quiet"
+            size="icon-touch"
             aria-label="Dismiss"
-            className="inline-flex size-11 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-background"
+            className="hover:bg-background"
             onClick={() => {
               sessionStorage.setItem(DISMISS_KEY, "1")
               setKind(null)
             }}
           >
             <IconX className="size-5" stroke={1.5} />
-          </button>
+          </Button>
         </div>
       </div>
     )

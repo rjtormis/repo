@@ -29,6 +29,14 @@ export function completedSets(row: SessionExerciseRow): WorkoutSetDetail[] {
   return row.workoutSets.filter((setLog) => setLog.completedAt)
 }
 
+export function restorableSets(row: SessionExerciseRow) {
+  return row.workoutSets.map((setLog) => ({
+    weightKg: weightKg(setLog.weight),
+    reps: setLog.reps,
+    completed: Boolean(setLog.completedAt),
+  }))
+}
+
 export function setSummary(row: SessionExerciseRow, unit: WeightUnit): string {
   const groups: { kg: number | null; reps: number[] }[] = []
 

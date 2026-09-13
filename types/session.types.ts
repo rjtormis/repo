@@ -12,6 +12,7 @@ export type SessionExerciseRow = {
   exercise: {
     id: string
     name: string
+    muscleGroup: string
   }
   workoutSets: WorkoutSetDetail[]
 }

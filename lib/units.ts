@@ -31,6 +31,21 @@ export function displayToKg(value: number, unit: WeightUnit): number {
   return round(value, 2)
 }
 
+export function weightDisplayStep(unit: WeightUnit): number {
+  return unit === "lb" ? 5 : 2.5
+}
+
+export function stepDisplayWeight(
+  current: number | null,
+  unit: WeightUnit,
+  direction: 1 | -1
+): number | null {
+  const step = weightDisplayStep(unit)
+  if (current == null) return direction < 0 ? null : step
+  const next = round((Math.round(current / step) + direction) * step, 1)
+  return next <= 0 ? null : next
+}
+
 /** Epley. 1-rep sets are the weight itself. */
 export function estimated1rmKg(weightKg: number, reps: number) {
   if (reps <= 1) return weightKg
