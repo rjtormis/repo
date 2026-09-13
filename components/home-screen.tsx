@@ -21,6 +21,7 @@ import {
 } from "@/components/home/lib"
 import { HistoryPager } from "@/components/home/history-pager"
 import { StatsCard } from "@/components/home/stats-card"
+import { HomeSkeleton } from "@/components/home/skeleton/home-skeleton"
 import { TrainingHeatmap } from "@/components/home/training-heatmap"
 import type { ActiveSession, WeeklyTarget } from "@/components/home/types"
 import { useGetDashboardStats } from "@/hooks/tanstack/dashboard"
@@ -40,7 +41,7 @@ export default function HomeScreen() {
   const [weekly] = useState<WeeklyTarget>({ done: 3, goal: 5, daysLeft: 4 })
 
   const today = new Date().toLocaleDateString("en-CA")
-  const { data: stats } = useGetDashboardStats(today)
+  const { data: stats, isPending: statsPending } = useGetDashboardStats(today)
   const activeSession: ActiveSession | null = stats?.activeSession
     ? {
         id: stats.activeSession.id,
@@ -152,6 +153,10 @@ export default function HomeScreen() {
       )}
     </Button>
   )
+
+  if (statsPending) {
+    return <HomeSkeleton />
+  }
 
   return (
     <div className="relative mx-auto min-h-dvh w-full max-w-lg min-w-0 bg-background">
