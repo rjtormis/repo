@@ -353,7 +353,10 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
         onOpenChange={setAddOpen}
         onSelect={(exercises) => {
           void addExercises({
-            exerciseIds: exercises.map((exercise) => exercise.id),
+            exercises: exercises.map((exercise) => ({
+              id: exercise.id,
+              name: exercise.name,
+            })),
           })
         }}
         isLoading={addExercisePending}
