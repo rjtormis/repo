@@ -48,17 +48,16 @@ export const GET = withErrorHandler(
       }),
     ])
 
+    const logged = sessions.filter((row) => row.setCount > 0)
     const heatmap = Object.values(
-      sessions
-        .filter((row) => row.setCount > 0)
-        .reduce<Record<string, HeatmapDatum>>((acc, row) => {
-          const date = new Date(row.lastDoneAt ?? Date.now()).toLocaleDateString(
-            "en-CA"
-          )
-          acc[date] ??= { date, value: 0 }
-          acc[date].value = Math.min(3, acc[date].value + 1)
-          return acc
-        }, {})
+      logged.reduce<Record<string, HeatmapDatum>>((acc, row) => {
+        const date = new Date(row.lastDoneAt ?? Date.now()).toLocaleDateString(
+          "en-CA"
+        )
+        acc[date] ??= { date, value: 0 }
+        acc[date].value = Math.min(3, acc[date].value + 1)
+        return acc
+      }, {})
     )
 
     const data = buildShareCardData(session, unit, {
@@ -66,6 +65,7 @@ export const GET = withErrorHandler(
       heatmap,
       streakCount: streak.count,
       streakUnit: streak.unit,
+      sessionCount: logged.length,
     })
 
     if (variant === "pr" && !data.record) {

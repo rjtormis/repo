@@ -75,7 +75,7 @@ export type AxisLabelsConfig = {
   showMonths?: boolean
   /**
    * Which weekday rows to label (0..6 in grid order top->bottom).
-   * Default: [1,3,5] => Mon/Wed/Fri when weekStartsOn=1 (nice uncluttered)
+   * Default: Mon/Wed/Fri for the current `weekStartsOn`.
    */
   weekdayIndices?: number[]
   /** Month label format. Default: "short" */
@@ -291,7 +291,7 @@ function weekdayLabelForIndex(index: number, weekStartsOn: 0 | 1) {
   const actualDay = (weekStartsOn + index) % 7
   // stable reference week (UTC)
   const base = new Date(Date.UTC(2024, 0, 7 + actualDay))
-  return base.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase()
+  return base.toLocaleDateString("en-US", { weekday: "short" })
 }
 
 /* ---------------- component ---------------- */
@@ -345,7 +345,8 @@ export function HeatmapCalendar({
   const showAxis = axisCfg.show ?? true
   const showWeekdays = axisCfg.showWeekdays ?? true
   const showMonths = axisCfg.showMonths ?? true
-  const weekdayIndices = axisCfg.weekdayIndices ?? [1, 3, 5]
+  const weekdayIndices =
+    axisCfg.weekdayIndices ?? (weekStartsOn === 1 ? [0, 2, 4] : [1, 3, 5])
   const monthFormat = axisCfg.monthFormat ?? "short"
   const minWeekSpacing = axisCfg.minWeekSpacing ?? 3
 
@@ -478,8 +479,10 @@ export function HeatmapCalendar({
 
     return labels.filter((label, index) => {
       const next = labels[index + 1]
-      const end = next?.colIndex ?? columns.length
-      return end - label.colIndex >= minWeekSpacing
+      // Always keep the trailing month — remaining weeks in the current
+      // month are often fewer than minWeekSpacing (e.g. mid-September).
+      if (!next) return true
+      return next.colIndex - label.colIndex >= minWeekSpacing
     })
   })()
 

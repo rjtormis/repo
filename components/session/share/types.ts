@@ -9,6 +9,9 @@ export const SHARE_STORY_SAFE_Y = (250 / 1920) * SHARE_STORY_HEIGHT
 export const SHARE_VARIANTS = ["session", "pr"] as const
 export type ShareVariant = (typeof SHARE_VARIANTS)[number]
 
+/** Sparse heatmaps read as “barely trains.” Hero volume until this many sessions. */
+export const SHARE_HEATMAP_MIN_SESSIONS = 10
+
 export type ShareCardRecord = {
   exerciseName: string
   detail: string
@@ -38,6 +41,8 @@ export type ShareCardData = {
   streakCount: number | null
   streakUnit: "day" | "week" | null
   handle: string | null
+  /** Logged sessions (setCount > 0). Grid shows at SHARE_HEATMAP_MIN_SESSIONS. */
+  sessionCount: number
 }
 
 export type ShareCardExtras = {
@@ -45,4 +50,5 @@ export type ShareCardExtras = {
   streakCount?: number
   streakUnit?: "day" | "week"
   handle?: string | null
+  sessionCount?: number
 }

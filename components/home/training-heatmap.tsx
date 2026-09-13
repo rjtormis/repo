@@ -52,7 +52,11 @@ export function TrainingHeatmap({
               cellSize={cellSize}
               cellGap={CELL_GAP}
               fillWidth
-              axisLabels={{ showWeekdays: false, showMonths: true }}
+              axisLabels={{
+                showWeekdays: true,
+                showMonths: true,
+                weekdayIndices: [0, 1, 2, 3, 4, 5, 6],
+              }}
               legend={false}
               levelClassNames={HEAT_LEVELS}
               getLevel={(value) => {

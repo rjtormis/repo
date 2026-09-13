@@ -346,6 +346,7 @@ export function SessionDetail({ sessionId }: { sessionId: string }) {
           heatmap: dash?.heatmap,
           streakCount: dash?.streak.count,
           streakUnit: dash?.streak.unit,
+          sessionCount: dash?.sessions.total,
         })}
       />
       <AddExerciseDrawer

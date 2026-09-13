@@ -1,6 +1,7 @@
 import type { Ref } from "react"
 import { LogoMark } from "@/components/logo"
 import {
+  SHARE_HEATMAP_MIN_SESSIONS,
   SHARE_STORY_HEIGHT,
   SHARE_STORY_SAFE_Y,
   SHARE_STORY_WIDTH,
@@ -54,20 +55,32 @@ function ShareBrand() {
   )
 }
 
-function SessionBody({ data }: { data: ShareCardData }) {
-  const streakUnit = data.streakUnit === "day" ? "day" : "week"
-
+function SessionHeading({ data }: { data: ShareCardData }) {
   return (
     <>
       <p className="mt-6 text-[11px] font-medium tracking-[0.14em] text-white/45 uppercase">
         {data.dateLabel}
         {data.durationLabel ? ` · ${data.durationLabel}` : ""}
       </p>
-      <h1 className="mt-1.5 text-[34px] leading-none font-semibold tracking-tight text-balance">
+      <h1 className="mt-1.5 line-clamp-2 min-w-0 text-[34px] leading-[1.05] font-semibold tracking-tight wrap-break-word">
         {data.name}
       </h1>
+    </>
+  )
+}
 
-      <div className="mt-7 grid w-full grid-cols-3 gap-x-3">
+function SessionBody({ data }: { data: ShareCardData }) {
+  if (data.sessionCount < SHARE_HEATMAP_MIN_SESSIONS) {
+    return <SessionHeroBody data={data} />
+  }
+
+  const streakUnit = data.streakUnit === "day" ? "day" : "week"
+
+  return (
+    <>
+      <SessionHeading data={data} />
+
+      <div className="mt-7 grid w-full shrink-0 grid-cols-3 gap-x-3">
         <ShareStat label="Exercises" value={String(data.exerciseCount)} />
         <ShareStat label="Sets" value={String(data.setCount)} />
         <ShareStat
@@ -77,27 +90,51 @@ function SessionBody({ data }: { data: ShareCardData }) {
         />
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col items-start justify-center py-6">
-        {data.streakCount != null ? (
+      {data.streakCount != null ? (
+        <div className="mt-7 shrink-0">
           <ShareStat
             label={`${streakUnit} streak`}
             value={String(data.streakCount)}
           />
-        ) : (
-          <p className="text-sm text-white/40">
-            Streak shows up after a couple of weeks in a row.
-          </p>
-        )}
-      </div>
+        </div>
+      ) : null}
 
-      <div>
-        <p className="text-[10px] font-medium tracking-[0.14em] text-white/40 uppercase">
+      <div className="mt-7 flex min-h-0 flex-1 flex-col">
+        <p className="shrink-0 text-[10px] font-medium tracking-[0.14em] text-white/40 uppercase">
           {data.monthsLabel}
         </p>
         <ShareHeatmap levels={data.heatmap} />
         <ShareUrl handle={data.handle} />
       </div>
     </>
+  )
+}
+
+function SessionHeroBody({ data }: { data: ShareCardData }) {
+  const details = [
+    `${data.exerciseCount} ${data.exerciseCount === 1 ? "exercise" : "exercises"}`,
+    `${data.setCount} ${data.setCount === 1 ? "set" : "sets"}`,
+  ].join(" · ")
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <SessionHeading data={data} />
+
+      <div className="flex min-h-0 flex-1 flex-col justify-center">
+        <p className="font-mono text-[72px] leading-none font-medium tracking-tight tabular-nums">
+          {data.volumeAmount}
+          <span className="text-[28px] font-medium text-white/70">
+            {" "}
+            {data.volumeUnit}
+          </span>
+        </p>
+        <p className="mt-3 font-mono text-[22px] leading-none font-medium text-white/80 tabular-nums">
+          {details}
+        </p>
+      </div>
+
+      <ShareUrl handle={data.handle} />
+    </div>
   )
 }
 
@@ -209,21 +246,27 @@ function ShareHeatmap({ levels }: { levels: number[] }) {
   const days = 7
 
   return (
-    <div className="mt-3 flex gap-[3px]" aria-hidden>
-      {Array.from({ length: weeks }, (_, week) => (
-        <div key={week} className="flex flex-col gap-[3px]">
-          {Array.from({ length: days }, (_, day) => {
-            const level = levels[week * days + day] ?? 0
-            return (
-              <span
-                key={day}
-                className="size-[7px] rounded-[1.5px]"
-                style={{ background: HEAT[level] ?? HEAT[0] }}
-              />
-            )
-          })}
-        </div>
-      ))}
+    <div
+      className="mt-3 grid min-h-0 w-full flex-1"
+      style={{
+        gridTemplateColumns: `repeat(${weeks}, minmax(0, 1fr))`,
+        gridTemplateRows: `repeat(${days}, minmax(0, 1fr))`,
+        gap: 3,
+      }}
+      aria-hidden
+    >
+      {Array.from({ length: days }, (_, day) =>
+        Array.from({ length: weeks }, (_, week) => {
+          const level = levels[week * days + day] ?? 0
+          return (
+            <span
+              key={`${week}-${day}`}
+              className="min-h-0 min-w-0 rounded-[1.5px]"
+              style={{ background: HEAT[level] ?? HEAT[0] }}
+            />
+          )
+        })
+      )}
     </div>
   )
 }

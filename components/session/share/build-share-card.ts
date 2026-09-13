@@ -56,12 +56,15 @@ export function buildShareCardData(
     heatmap: heatmapLevels(extras.heatmap, start),
     monthsLabel: "Last 6 months",
     streakCount:
-      extras.streakCount && extras.streakCount > 0 ? extras.streakCount : null,
+      extras.streakCount != null && extras.streakCount >= 2
+        ? extras.streakCount
+        : null,
     streakUnit:
-      extras.streakCount && extras.streakCount > 0
+      extras.streakCount != null && extras.streakCount >= 2
         ? (extras.streakUnit ?? "week")
         : null,
     handle: extras.handle ?? null,
+    sessionCount: extras.sessionCount ?? 0,
   }
 }
 
