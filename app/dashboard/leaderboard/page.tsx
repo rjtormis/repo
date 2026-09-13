@@ -3,7 +3,7 @@ import { LeaderboardScreen } from "@/components/leaderboard-screen"
 import { Shell } from "@/components/shell"
 
 export const metadata: Metadata = {
-  title: "Leaderboard — Repo",
+  title: "Leaderboard",
   description: "Heaviest logged set on each movement.",
 }
 

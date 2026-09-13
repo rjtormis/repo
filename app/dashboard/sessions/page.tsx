@@ -3,7 +3,7 @@ import { SessionsScreen } from "@/components/sessions-screen"
 import { Shell } from "@/components/shell"
 
 export const metadata: Metadata = {
-  title: "Sessions — Repo",
+  title: "Sessions",
   description: "Your finished sessions, newest first.",
 }
 

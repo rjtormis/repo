@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next"
 import Script from "next/script"
 import { Geist_Mono, Inter } from "next/font/google"
+import { SITE } from "@/lib/meta-data"
 
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -26,10 +27,37 @@ const fontMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  // Name still open — "Repo" is a suggestion only
-  title: "Workout log",
-  description: "Last session under each set. Offline-first. No programs.",
+  metadataBase: new URL(SITE.url),
+  title: {
+    default: `${SITE.name} — ${SITE.tagline}`,
+    template: `%s · ${SITE.name}`,
+  },
+  description: SITE.description,
+  applicationName: SITE.name,
   manifest: "/manifest.webmanifest",
+  keywords: [
+    "gym tracker",
+    "workout log",
+    "lifting log",
+    "progressive overload",
+    "strength training",
+  ],
+  authors: [{ name: SITE.name, url: SITE.url }],
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    siteName: SITE.name,
+    url: SITE.url,
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: SITE.name }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${SITE.name} — ${SITE.tagline}`,
+    description: SITE.description,
+    images: ["/og.png"],
+  },
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml", sizes: "any" },
@@ -44,8 +72,8 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
+    title: SITE.name,
     statusBarStyle: "black-translucent",
-    title: "Repo",
   },
   formatDetection: {
     telephone: false,
