@@ -11,7 +11,6 @@ import {
   HEAT_SWATCH,
   PAGE_PAD_STYLE,
   PAGE_PAD_X,
-  WEEKDAY_COL,
 } from "@/components/home/constants"
 import { cn } from "@/lib/utils"
 
@@ -97,50 +96,54 @@ export function HomeSkeleton() {
         </section>
 
         <section className="mb-4 min-w-0" dir="ltr" aria-hidden>
-          <div
-            className="grid w-full"
-            style={{
-              columnGap: CELL_GAP,
-              rowGap: CELL_GAP,
-              gridTemplateColumns: `${WEEKDAY_COL}px repeat(${HEAT_WEEKS}, minmax(0, 1fr))`,
-            }}
-          >
-            {Array.from({ length: 6 }, (_, i) => (
-              <Bone
-                key={`month-${i}`}
-                className="h-3 w-7"
-                style={{
-                  gridRow: 1,
-                  gridColumn: `${2 + i * 4} / ${6 + i * 4}`,
-                }}
-              />
-            ))}
-            {Array.from({ length: HEAT_DAYS }, (_, day) =>
-              day === 0 || day === 6 ? null : (
-                <div
-                  key={`weekday-${day}`}
-                  className="flex items-center justify-end"
-                  style={{ gridColumn: 1, gridRow: day + 2 }}
-                >
-                  <Bone className="h-2.5 w-full" />
-                </div>
-              )
-            )}
-            {Array.from({ length: HEAT_WEEKS }, (_, week) =>
-              Array.from({ length: HEAT_DAYS }, (_, day) => (
-                <span
-                  key={`${week}-${day}`}
-                  className={cn(
-                    "aspect-square w-full rounded-xs",
-                    HEAT_LEVELS[skeletonHeatLevel(week, day)]
+          <div className="mb-1 flex w-full">
+            <div
+              className="w-7.5 shrink-0"
+              style={{ marginInlineEnd: CELL_GAP }}
+            />
+            <div className="flex min-w-0 flex-1 justify-between">
+              {Array.from({ length: 6 }, (_, i) => (
+                <Bone key={i} className="h-3 w-7" />
+              ))}
+            </div>
+          </div>
+          <div className="flex w-full">
+            <div
+              className="grid w-7.5 shrink-0"
+              style={{
+                marginInlineEnd: CELL_GAP,
+                gap: CELL_GAP,
+                gridTemplateRows: "repeat(7, minmax(0, 1fr))",
+              }}
+            >
+              {Array.from({ length: HEAT_DAYS }, (_, day) => (
+                <div key={day} className="flex items-center justify-end">
+                  {day === 0 || day === 6 ? null : (
+                    <Bone className="h-2.5 w-full" />
                   )}
-                  style={{
-                    gridColumn: week + 2,
-                    gridRow: day + 2,
-                  }}
-                />
-              ))
-            )}
+                </div>
+              ))}
+            </div>
+            <div className="flex min-w-0 flex-1" style={{ gap: CELL_GAP }}>
+              {Array.from({ length: HEAT_WEEKS }, (_, week) => (
+                <div
+                  key={week}
+                  className="flex min-w-0 flex-1 flex-col"
+                  style={{ gap: CELL_GAP }}
+                >
+                  {Array.from({ length: HEAT_DAYS }, (_, day) => (
+                    <span
+                      key={day}
+                      className={cn(
+                        "w-full rounded-xs",
+                        HEAT_LEVELS[skeletonHeatLevel(week, day)]
+                      )}
+                      style={{ height: 11 }}
+                    />
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
           <div className="mt-2 flex items-center justify-end gap-1.5 text-xs text-foreground/55">
             <span>less</span>
